@@ -1,5 +1,5 @@
 /*
- * ColorNicks Logger - Store colored nicks in HTML logs
+ * ColorNicks Logger - Store unique colored nicks in HTML logs
  * Based on html_logger in libpurple/log.c
  * Copyright (C) 2013 Ankit Vani <a@nevitus.org>
  *
@@ -42,7 +42,7 @@ get_nick_color(PidginConversation *gtkconv, const char *name)
 	static GdkColor col;
 	GtkStyle *style;
 	float scale;
-	
+
 	g_return_val_if_fail(name != NULL && gtkconv != NULL && gtkconv->nick_colors != NULL, NULL);
 
 	style = gtk_widget_get_style(gtkconv->webview);
@@ -394,10 +394,11 @@ static PurplePluginInfo info =
 	"ColorNicks Logger",                              /**< name           */
 	"0.1",                                            /**< version        */
 	                                                  /**  summary        */
-	"Store colored nicks in HTML logs.",
+	"Store unique colored nicks in HTML logs.",
 	                                                  /**  description    */
 	"This plugin adds the log format 'Colored nicks', "
-	"which can store colored nicks in HTML logs.",
+	"which can store unique colored nicks in HTML "
+	"logs.",
 	"Ankit Vani <a@nevitus.org>",                     /**< author         */
 	"www.nevitus.com",                                /**< homepage       */
 
