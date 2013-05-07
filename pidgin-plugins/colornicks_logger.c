@@ -20,7 +20,7 @@
 
 #include "internal.h"
 #include "debug.h"
-#include "plugin.h"
+#include "gtkplugin.h"
 #include "version.h"
 #include "gtkconv.h"
 
@@ -385,7 +385,7 @@ static PurplePluginInfo info =
 	PURPLE_MAJOR_VERSION,
 	PURPLE_MINOR_VERSION,
 	PURPLE_PLUGIN_STANDARD,                           /**< type           */
-	NULL,                                             /**< ui_requirement */
+	PIDGIN_PLUGIN_TYPE,                               /**< ui_requirement */
 	0,                                                /**< flags          */
 	NULL,                                             /**< dependencies   */
 	PURPLE_PRIORITY_DEFAULT,                          /**< priority       */
