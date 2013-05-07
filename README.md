@@ -1,4 +1,5 @@
-PidginPlugins
-=============
+Pidgin plugins
+--------------
 
-Plugins for pidgin, libpurple and finch.
+This repo contains plugins I've written for pidgin, libpurple and finch,
+organized by appropriate directories.
