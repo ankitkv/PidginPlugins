@@ -400,7 +400,7 @@ static PurplePluginInfo info =
 	"which can store unique colored nicks in HTML "
 	"logs.",
 	"Ankit Vani <a@nevitus.org>",                     /**< author         */
-	"www.nevitus.com",                                /**< homepage       */
+	"http://nevitus.com",                             /**< homepage       */
 
 	plugin_load,                                      /**< load           */
 	plugin_unload,                                    /**< unload         */
