@@ -18,11 +18,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02111-1301, USA.
  */
 
-#include "gtkconv.h"
 #include "internal.h"
 #include "debug.h"
 #include "plugin.h"
 #include "version.h"
+#include "gtkconv.h"
 
 #define LUMINANCE(c) (float)((0.3*(c.red))+(0.59*(c.green))+(0.11*(c.blue)))
 
