@@ -22,22 +22,155 @@
 #include "debug.h"
 #include "gtkplugin.h"
 #include "version.h"
+#include "gtkconv.h"
 
 #include <messaging-menu.h>
 
 static MessagingMenuApp *mmapp;
 
+static int
+unnotify_cb(GtkWidget *widget, gpointer data, PurpleConversation *conv)
+{
+	return 0;
+}
+
+static gboolean
+message_displayed_cb(PurpleAccount *account, const char *who, char *message,
+                     PurpleConversation *conv, PurpleMessageFlags flags)
+{
+	return FALSE;
+}
+
+static void
+conv_switched(PurpleConversation *conv)
+{
+}
+
+static void
+im_sent_im(PurpleAccount *account, const char *receiver, const char *message)
+{
+}
+
+static void
+chat_sent_im(PurpleAccount *account, const char *message, int id)
+{
+}
+
+static void
+conv_created(PurpleConversation *conv)
+{
+}
+
+static void
+deleting_conv(PurpleConversation *conv)
+{
+}
+
+static int
+attach_signals(PurpleConversation *conv)
+{
+	PidginConversation *gtkconv = NULL;
+	GSList *webview_ids = NULL, *entry_ids = NULL;
+	guint id;
+
+	gtkconv = PIDGIN_CONVERSATION(conv);
+
+	id = g_signal_connect(G_OBJECT(gtkconv->entry), "focus-in-event",
+	                      G_CALLBACK(unnotify_cb), conv);
+	entry_ids = g_slist_append(entry_ids, GUINT_TO_POINTER(id));
+
+	id = g_signal_connect(G_OBJECT(gtkconv->webview), "focus-in-event",
+	                      G_CALLBACK(unnotify_cb), conv);
+	webview_ids = g_slist_append(webview_ids, GUINT_TO_POINTER(id));
+
+	id = g_signal_connect(G_OBJECT(gtkconv->entry), "button-press-event",
+	                      G_CALLBACK(unnotify_cb), conv);
+	entry_ids = g_slist_append(entry_ids, GUINT_TO_POINTER(id));
+
+	id = g_signal_connect(G_OBJECT(gtkconv->webview), "button-press-event",
+	                      G_CALLBACK(unnotify_cb), conv);
+	webview_ids = g_slist_append(webview_ids, GUINT_TO_POINTER(id));
+
+	id = g_signal_connect(G_OBJECT(gtkconv->entry), "key-press-event",
+	                      G_CALLBACK(unnotify_cb), conv);
+	entry_ids = g_slist_append(entry_ids, GUINT_TO_POINTER(id));
+
+	purple_conversation_set_data(conv, "notify-webview-signals", webview_ids);
+	purple_conversation_set_data(conv, "notify-entry-signals", entry_ids);
+
+	return 0;
+}
+
+static void
+detach_signals(PurpleConversation *conv)
+{
+	PidginConversation *gtkconv = NULL;
+	GSList *ids = NULL, *l;
+
+	gtkconv = PIDGIN_CONVERSATION(conv);
+	if (!gtkconv)
+		return;
+
+	ids = purple_conversation_get_data(conv, "notify-webview-signals");
+	for (l = ids; l != NULL; l = l->next)
+		g_signal_handler_disconnect(gtkconv->webview, GPOINTER_TO_INT(l->data));
+	g_slist_free(ids);
+
+	ids = purple_conversation_get_data(conv, "notify-entry-signals");
+	for (l = ids; l != NULL; l = l->next)
+		g_signal_handler_disconnect(gtkconv->entry, GPOINTER_TO_INT(l->data));
+	g_slist_free(ids);
+
+	purple_conversation_set_data(conv, "notify-message-count", GINT_TO_POINTER(0));
+
+	purple_conversation_set_data(conv, "notify-webview-signals", NULL);
+	purple_conversation_set_data(conv, "notify-entry-signals", NULL);
+}
+
 static gboolean
 plugin_load(PurplePlugin *plugin)
 {
+	GList *convs = purple_get_conversations();
+	void *conv_handle = purple_conversations_get_handle();
+	void *gtk_conv_handle = pidgin_conversations_get_handle();
+
 	mmapp = messaging_menu_app_new("pidgin.desktop");
 	messaging_menu_app_register(mmapp);
+
+	purple_signal_connect(gtk_conv_handle, "displayed-im-msg", plugin,
+	                    PURPLE_CALLBACK(message_displayed_cb), NULL);
+	purple_signal_connect(gtk_conv_handle, "displayed-chat-msg", plugin,
+	                    PURPLE_CALLBACK(message_displayed_cb), NULL);
+	purple_signal_connect(gtk_conv_handle, "conversation-switched", plugin,
+	                    PURPLE_CALLBACK(conv_switched), NULL);
+	purple_signal_connect(conv_handle, "sent-im-msg", plugin,
+	                    PURPLE_CALLBACK(im_sent_im), NULL);
+	purple_signal_connect(conv_handle, "sent-chat-msg", plugin,
+	                    PURPLE_CALLBACK(chat_sent_im), NULL);
+	purple_signal_connect(conv_handle, "conversation-created", plugin,
+	                    PURPLE_CALLBACK(conv_created), NULL);
+	purple_signal_connect(conv_handle, "deleting-conversation", plugin,
+	                    PURPLE_CALLBACK(deleting_conv), NULL);
+
+	while (convs) {
+		PurpleConversation *conv = (PurpleConversation *)convs->data;
+		attach_signals(conv);
+		convs = convs->next;
+	}
+
 	return TRUE;
 }
 
 static gboolean
 plugin_unload(PurplePlugin *plugin)
 {
+	GList *convs = purple_get_conversations();
+
+	while (convs) {
+		PurpleConversation *conv = (PurpleConversation *)convs->data;
+		detach_signals(conv);
+		convs = convs->next;
+	}
 	messaging_menu_app_unregister(mmapp);
 	g_object_unref(mmapp);
 	return TRUE;
