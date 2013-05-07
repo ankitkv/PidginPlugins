@@ -1,5 +1,5 @@
 /*
- * Messaging Menu Integration - Integration with Unity's messaging menu
+ * Unity Integration - Integration with Unity's messaging menu and launcher
  * Copyright (C) 2013 Ankit Vani <a@nevitus.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 #include "version.h"
 #include "gtkconv.h"
 
+#include <unity.h>
 #include <messaging-menu.h>
 
 static MessagingMenuApp *mmapp;
@@ -187,13 +188,14 @@ static PurplePluginInfo info =
 	NULL,                                             /**< dependencies   */
 	PURPLE_PRIORITY_DEFAULT,                          /**< priority       */
 
-	"ankitkv-messagingmenu",                          /**< id             */
-	"Messaging Menu Integration",                     /**< name           */
+	"ankitkv-unityinteg",                          /**< id             */
+	"Unity Integration",                     /**< name           */
 	"0.1",                                            /**< version        */
 	                                                  /**  summary        */
-	"Provides integration with Unity's messaging menu.",
+	"Provides integration with Unity.",
 	                                                  /**  description    */
-	"Provides integration with Unity's messaging menu.",
+	"Provides integration with Unity's messaging menu "
+	"and launcher.",
 	                                                  /**< author         */
 	"Ankit Vani <a@nevitus.org>",
 	"http://nevitus.com",                             /**< homepage       */
