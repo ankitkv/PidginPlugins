@@ -28,6 +28,7 @@
 #include <messaging-menu.h>
 
 static MessagingMenuApp *mmapp;
+static GSList *unity_ids = NULL;
 
 static int
 unnotify_cb(GtkWidget *widget, gpointer data, PurpleConversation *conv)
@@ -67,6 +68,38 @@ deleting_conv(PurpleConversation *conv)
 {
 }
 
+static void
+message_source_activated (MessagingMenuApp *app, const gchar *id,
+                          gpointer user_data)
+{
+}
+
+static void
+messaging_menu_status_changed(MessagingMenuApp *mmapp, 
+                              MessagingMenuStatus mm_status, gpointer user_data)
+{
+	switch (mm_status)
+	{
+	case MESSAGING_MENU_STATUS_AVAILABLE:
+		break;
+
+	case MESSAGING_MENU_STATUS_AWAY:
+		break;
+
+	case MESSAGING_MENU_STATUS_BUSY:
+		break;
+
+	case MESSAGING_MENU_STATUS_INVISIBLE:
+		break;
+
+	case MESSAGING_MENU_STATUS_OFFLINE:
+		break;
+
+	default:
+		g_assert_not_reached ();
+	}
+}
+
 static int
 attach_signals(PurpleConversation *conv)
 {
@@ -95,7 +128,7 @@ attach_signals(PurpleConversation *conv)
 	id = g_signal_connect(G_OBJECT(gtkconv->entry), "key-press-event",
 	                      G_CALLBACK(unnotify_cb), conv);
 	entry_ids = g_slist_append(entry_ids, GUINT_TO_POINTER(id));
-
+	
 	purple_conversation_set_data(conv, "messagingmenu-webview-signals", webview_ids);
 	purple_conversation_set_data(conv, "messagingmenu-entry-signals", entry_ids);
 
@@ -131,12 +164,20 @@ detach_signals(PurpleConversation *conv)
 static gboolean
 plugin_load(PurplePlugin *plugin)
 {
+	guint id;
 	GList *convs = purple_get_conversations();
 	void *conv_handle = purple_conversations_get_handle();
 	void *gtk_conv_handle = pidgin_conversations_get_handle();
 
 	mmapp = messaging_menu_app_new("pidgin.desktop");
 	messaging_menu_app_register(mmapp);
+
+	id = g_signal_connect(mmapp, "activate-source",
+	                       G_CALLBACK (message_source_activated), NULL);
+	unity_ids = g_slist_append(unity_ids, GUINT_TO_POINTER(id));
+	id = g_signal_connect(mmapp, "status-changed",
+	                       G_CALLBACK (messaging_menu_status_changed), NULL);
+	unity_ids = g_slist_append(unity_ids, GUINT_TO_POINTER(id));
 
 	purple_signal_connect(gtk_conv_handle, "displayed-im-msg", plugin,
 	                    PURPLE_CALLBACK(message_displayed_cb), NULL);
@@ -165,13 +206,18 @@ plugin_load(PurplePlugin *plugin)
 static gboolean
 plugin_unload(PurplePlugin *plugin)
 {
+	GSList *l;
 	GList *convs = purple_get_conversations();
-
 	while (convs) {
 		PurpleConversation *conv = (PurpleConversation *)convs->data;
 		detach_signals(conv);
 		convs = convs->next;
 	}
+
+	for (l = unity_ids; l != NULL; l = l->next)
+		g_signal_handler_disconnect(mmapp, GPOINTER_TO_INT(l->data));
+	g_slist_free(unity_ids);
+
 	messaging_menu_app_unregister(mmapp);
 	g_object_unref(mmapp);
 	return TRUE;
