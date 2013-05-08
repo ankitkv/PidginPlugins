@@ -21,8 +21,15 @@
 /* NOTE:
  * Ensure pidgin.desktop has X-MessagingMenu-UsesChatSection=true
  *
- * To do:
- * - add configuration
+ * Configuration options to add:
+ * [ ] Messaging menu integration
+ *     o Show last message time
+ *     o Show message count
+ *     o None
+ * [ ] Launcher icon integration
+ *     o Show number of messages
+ *     o Show number of sources
+ *     o None
  */
 
 #include "internal.h"
