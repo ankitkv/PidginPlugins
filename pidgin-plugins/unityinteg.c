@@ -20,10 +20,8 @@
 
 /* NOTE:
  * Ensure pidgin.desktop has X-MessagingMenu-UsesChatSection=true
- */
-
-/* To do:
- * - bring conversation window to front when messaging menu source is clicked
+ *
+ * To do:
  * - add configuration
  */
 
@@ -231,6 +229,8 @@ message_source_activated(MessagingMenuApp *app, const gchar *id,
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
+	pidgin_conv_window_switch_gtkconv(purplewin, PIDGIN_CONVERSATION(conv));
+	gdk_window_focus(gtk_widget_get_window(purplewin->window), time(NULL));
 
 	g_strfreev (sections);
 }
