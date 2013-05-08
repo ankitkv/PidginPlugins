@@ -35,7 +35,24 @@
 #include <messaging-menu.h>
 
 static MessagingMenuApp *mmapp;
+UnityLauncherEntry *launcher = NULL;
 static GSList *unity_ids = NULL;
+static gint n_sources;
+
+static void update_launcher (gint count)
+{
+	if (launcher != NULL)
+	{
+		if (count > 0)
+		{
+			unity_launcher_entry_set_count (launcher, count);
+			unity_launcher_entry_set_count_visible (launcher, TRUE);
+		} else {
+			unity_launcher_entry_set_count (launcher, count);
+			unity_launcher_entry_set_count_visible (launcher, FALSE);
+		}
+	}
+}
 
 static int
 unnotify_cb(GtkWidget *widget, gpointer data, PurpleConversation *conv)
@@ -261,6 +278,8 @@ plugin_load(PurplePlugin *plugin)
 
 	purple_signal_connect(savedstat_handle, "savedstatus-changed", plugin,
 	                    PURPLE_CALLBACK(status_changed_cb), NULL);
+
+	launcher = unity_launcher_entry_get_for_desktop_id("pidgin.desktop");
 
 	purple_signal_connect(gtk_conv_handle, "displayed-im-msg", plugin,
 	                    PURPLE_CALLBACK(message_displayed_cb), NULL);
