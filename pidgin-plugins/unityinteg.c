@@ -350,4 +350,4 @@ init_plugin(PurplePlugin *plugin)
 {
 }
 
-PURPLE_INIT_PLUGIN(notify, init_plugin, info)
+PURPLE_INIT_PLUGIN(unityinteg, init_plugin, info)
