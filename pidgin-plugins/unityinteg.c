@@ -70,8 +70,15 @@ update_launcher(PidginWindow *purplewin)
 static gchar *
 conversation_id(PurpleConversation *conv)
 {
-	// TODO: type:cname:aname:protocol
-	return g_strconcat ("todo", NULL);
+	PurpleConversationType conv_type = purple_conversation_get_type(conv);
+	char type[2] = "0";
+	const char *cname = purple_conversation_get_name(conv);
+	PurpleAccount *account = purple_conversation_get_account(conv);
+	const char *aname = purple_account_get_username(account);
+	const char *protocol = purple_account_get_protocol_id(account);
+	type[0] += conv_type;
+
+	return g_strconcat(type, ":", cname, ":", aname, ":", protocol, NULL);
 }
 
 
@@ -206,13 +213,26 @@ static void
 message_source_activated(MessagingMenuApp *app, const gchar *id,
                          gpointer user_data)
 {
-	// TODO: handle source
-	/*
-		type:cname:aname:protocol
-	*/
+	gchar **sections = g_strsplit(id, ":", 0);
 	PurpleConversation *conv = NULL;
-	PurpleAccount *account = purple_accounts_find(aname, protocol);
-	conv = purple_find_conversation_with_account(type, cname, account);
+	PurpleAccount *account;
+	PidginWindow *purplewin = NULL;
+	PurpleConversationType conv_type;
+
+	char *type     = sections[0];
+	char *cname    = sections[1];
+	char *aname    = sections[2];
+	char *protocol = sections[3];
+
+	conv_type = type[0] - '0';
+	account = purple_accounts_find(aname, protocol);
+	conv = purple_find_conversation_with_account(conv_type, cname, account);
+	purplewin = PIDGIN_CONVERSATION(conv)->win;
+	purple_conversation_set_data(conv, "unity-message-count",
+	                             GINT_TO_POINTER(0));
+	update_launcher(purplewin);
+
+	g_strfreev (sections);
 }
 
 static PurpleSavedStatus *
@@ -264,7 +284,7 @@ status_changed_cb(PurpleSavedStatus *saved_status)
 		break;
 
 	default:
-		g_assert_not_reached ();
+		g_assert_not_reached();
 	}
 	messaging_menu_app_set_status(mmapp, status);
 }
@@ -298,7 +318,7 @@ messaging_menu_status_changed(MessagingMenuApp *mmapp,
 		break;
 
 	default:
-		g_assert_not_reached ();
+		g_assert_not_reached();
 	}
 
 	saved_status = purple_savedstatus_find_transient_by_type_and_message(primitive, NULL);
@@ -380,10 +400,10 @@ plugin_load(PurplePlugin *plugin)
 	messaging_menu_app_register(mmapp);
 
 	id = g_signal_connect(mmapp, "activate-source",
-	                       G_CALLBACK (message_source_activated), NULL);
+	                       G_CALLBACK(message_source_activated), NULL);
 	unity_ids = g_slist_append(unity_ids, GUINT_TO_POINTER(id));
 	id = g_signal_connect(mmapp, "status-changed",
-	                       G_CALLBACK (messaging_menu_status_changed), NULL);
+	                       G_CALLBACK(messaging_menu_status_changed), NULL);
 	unity_ids = g_slist_append(unity_ids, GUINT_TO_POINTER(id));
 
 	saved_status = purple_savedstatus_get_current();
