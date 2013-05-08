@@ -100,6 +100,7 @@ messaging_menu_add_source(PurpleConversation *conv, gint count)
 	messaging_menu_app_set_source_count(mmapp, id, count);
 	messaging_menu_app_draw_attention(mmapp, id);
 
+	g_clear_object(&gicon);
 	g_free(id);
 }
 
