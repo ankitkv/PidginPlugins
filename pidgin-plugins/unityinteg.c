@@ -75,6 +75,12 @@ deleting_conv(PurpleConversation *conv)
 {
 }
 
+static void
+message_source_activated (MessagingMenuApp *app, const gchar *id,
+                          gpointer user_data)
+{
+}
+
 static PurpleSavedStatus *
 create_transient_status(PurpleStatusPrimitive primitive, PurpleStatusType *status_type)
 {
@@ -90,12 +96,6 @@ create_transient_status(PurpleStatusPrimitive primitive, PurpleStatusType *statu
 	}
 
 	return saved_status;
-}
-
-static void
-message_source_activated (MessagingMenuApp *app, const gchar *id,
-                          gpointer user_data)
-{
 }
 
 static void
@@ -137,7 +137,7 @@ status_changed_cb(PurpleSavedStatus *saved_status)
 }
 
 static void
-messaging_menu_status_changed(MessagingMenuApp *mmapp, 
+messaging_menu_status_changed(MessagingMenuApp *mmapp,
                               MessagingMenuStatus mm_status, gpointer user_data)
 {
 	PurpleSavedStatus *saved_status;
@@ -203,7 +203,7 @@ attach_signals(PurpleConversation *conv)
 	id = g_signal_connect(G_OBJECT(gtkconv->entry), "key-press-event",
 	                      G_CALLBACK(unnotify_cb), conv);
 	entry_ids = g_slist_append(entry_ids, GUINT_TO_POINTER(id));
-	
+
 	purple_conversation_set_data(conv, "messagingmenu-webview-signals", webview_ids);
 	purple_conversation_set_data(conv, "messagingmenu-entry-signals", entry_ids);
 
