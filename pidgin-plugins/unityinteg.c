@@ -27,6 +27,7 @@
 #include "version.h"
 #include "account.h"
 #include "savedstatuses.h"
+#include "buddyicon.h"
 
 #include "gtkplugin.h"
 #include "gtkconv.h"
@@ -74,14 +75,25 @@ conversation_id(PurpleConversation *conv)
 
 
 static void
-messaging_menu_add_source(const gchar *source_id, gint count)
+messaging_menu_add_source(PurpleConversation *conv, gint count)
 {
+	PurpleConvIm *conv_im = purple_conversation_get_im_data(conv);
+	PurpleBuddyIcon *icon = purple_conv_im_get_icon(conv_im);
+	const gchar *id = conversation_id(conv);
+	GIcon *gicon = NULL;
+
+	if (icon != NULL)
+		gicon = g_icon_new_for_string(purple_buddy_icon_get_data(icon, NULL),
+		                              NULL);
+
 	// TODO: add source
 }
 
 static void
-messaging_menu_remove_source(const gchar *source_id)
+messaging_menu_remove_source(PurpleConversation *conv)
 {
+	const gchar *id = conversation_id(conv);
+
 	// TODO: remove source
 }
 
@@ -106,7 +118,7 @@ notify(PurpleConversation *conv)
 		purple_conversation_set_data(conv, "unity-message-count",
 		                             GINT_TO_POINTER(count));
 		update_launcher(purplewin);
-		messaging_menu_add_source(conversation_id(conv), count);
+		messaging_menu_add_source(conv, count);
 	}
 
 	return 0;
@@ -122,7 +134,7 @@ unnotify_cb(GtkWidget *widget, gpointer data, PurpleConversation *conv)
 		purple_conversation_set_data(conv, "unity-message-count",
 		                             GINT_TO_POINTER(0));
 		update_launcher(purplewin);
-		messaging_menu_remove_source(conversation_id(conv));
+		messaging_menu_remove_source(conv);
 	}
 
 	return 0;
@@ -148,7 +160,7 @@ im_sent_im(PurpleAccount *account, const char *receiver, const char *message)
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
-	messaging_menu_remove_source(conversation_id(conv));
+	messaging_menu_remove_source(conv);
 }
 
 static void
@@ -160,7 +172,7 @@ chat_sent_im(PurpleAccount *account, const char *message, int id)
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
-	messaging_menu_remove_source(conversation_id(conv));
+	messaging_menu_remove_source(conv);
 }
 
 static void
@@ -179,7 +191,7 @@ deleting_conv(PurpleConversation *conv)
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
-	messaging_menu_remove_source(conversation_id(conv));
+	messaging_menu_remove_source(conv);
 }
 
 static void
