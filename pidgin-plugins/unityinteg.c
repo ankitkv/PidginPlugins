@@ -70,7 +70,8 @@ update_launcher(PidginWindow *purplewin)
 static gchar *
 conversation_id(PurpleConversation *conv)
 {
-	return g_strconcat ("todo", NULL); // TODO: concat all strings
+	// TODO: type:cname:aname:protocol
+	return g_strconcat ("todo", NULL);
 }
 
 
@@ -79,22 +80,29 @@ messaging_menu_add_source(PurpleConversation *conv, gint count)
 {
 	PurpleConvIm *conv_im = purple_conversation_get_im_data(conv);
 	PurpleBuddyIcon *icon = purple_conv_im_get_icon(conv_im);
-	const gchar *id = conversation_id(conv);
+	gchar *id = conversation_id(conv);
 	GIcon *gicon = NULL;
 
-	if (icon != NULL)
-		gicon = g_icon_new_for_string(purple_buddy_icon_get_data(icon, NULL),
-		                              NULL);
+	if (!messaging_menu_app_has_source(mmapp, id)) {
+		if (icon != NULL)
+			gicon = g_icon_new_for_string(purple_buddy_icon_get_data(icon, NULL),
+			                              NULL);
+		messaging_menu_app_append_source(mmapp, id, gicon,
+		                                 purple_conversation_get_name(conv));
+	}
+	messaging_menu_app_set_source_time(mmapp, id, g_get_real_time());
+	messaging_menu_app_set_source_count(mmapp, id, count);
+	messaging_menu_app_draw_attention(mmapp, id);
 
-	// TODO: add source
+	g_free(id);
 }
 
 static void
 messaging_menu_remove_source(PurpleConversation *conv)
 {
-	const gchar *id = conversation_id(conv);
-
-	// TODO: remove source
+	gchar *id = conversation_id(conv);
+	messaging_menu_app_remove_source(mmapp, id);
+	g_free(id);
 }
 
 static int
@@ -199,6 +207,12 @@ message_source_activated(MessagingMenuApp *app, const gchar *id,
                          gpointer user_data)
 {
 	// TODO: handle source
+	/*
+		type:cname:aname:protocol
+	*/
+	PurpleConversation *conv = NULL;
+	PurpleAccount *account = purple_accounts_find(aname, protocol);
+	conv = purple_find_conversation_with_account(type, cname, account);
 }
 
 static PurpleSavedStatus *
