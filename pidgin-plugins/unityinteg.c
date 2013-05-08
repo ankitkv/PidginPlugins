@@ -22,6 +22,8 @@
  * Ensure pidgin.desktop has X-MessagingMenu-UsesChatSection=true
  */
 
+// TODO: add configuration
+
 #include "internal.h"
 #include "debug.h"
 #include "version.h"
@@ -231,6 +233,7 @@ message_source_activated(MessagingMenuApp *app, const gchar *id,
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
+	// TODO: show conversation
 
 	g_strfreev (sections);
 }
