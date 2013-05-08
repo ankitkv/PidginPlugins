@@ -93,7 +93,7 @@ conversation_id(PurpleConversation *conv)
 }
 
 static void
-messaging_menu_add_source(PurpleConversation *conv, gint count)
+messaging_menu_add_source(PurpleConversation *conv, gint count, gint time)
 {
 	gchar *id = conversation_id(conv);
 
@@ -104,7 +104,7 @@ messaging_menu_add_source(PurpleConversation *conv, gint count)
 		                                 purple_conversation_get_title(conv));
 		++n_sources;
 	}
-	messaging_menu_app_set_source_time(mmapp, id, g_get_real_time());
+	messaging_menu_app_set_source_time(mmapp, id, time);
 	messaging_menu_app_set_source_count(mmapp, id, count);
 	messaging_menu_app_draw_attention(mmapp, id);
 
@@ -125,7 +125,7 @@ messaging_menu_remove_source(PurpleConversation *conv)
 static int
 notify(PurpleConversation *conv)
 {
-	gint count;
+	gint count, time;
 	PidginWindow *purplewin = NULL;
 	if (conv == NULL || PIDGIN_CONVERSATION(conv) == NULL)
 		return 0;
@@ -140,10 +140,11 @@ notify(PurpleConversation *conv)
 		count++;
 		purple_conversation_set_data(conv, "unity-message-count",
 		                             GINT_TO_POINTER(count));
+		time = g_get_real_time();
 		purple_conversation_set_data(conv, "unity-message-time",
-		                             GINT_TO_POINTER(g_get_real_time()));
+		                             GINT_TO_POINTER(time));
 		update_launcher(purplewin);
-		messaging_menu_add_source(conv, count);
+		messaging_menu_add_source(conv, count, time);
 	}
 
 	return 0;
