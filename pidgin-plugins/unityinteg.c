@@ -50,7 +50,8 @@ update_launcher(PidginWindow *purplewin)
 	for (convs = purplewin->gtkconvs; convs != NULL; convs = convs->next) {
 		PidginConversation *conv = convs->data;
 		for (l = conv->convs; l != NULL; l = l->next) {
-			count += GPOINTER_TO_INT(purple_conversation_get_data(l->data, "unity-message-count"));
+			count += GPOINTER_TO_INT(purple_conversation_get_data(l->data,
+			                         "unity-message-count"));
 		}
 	}
 
@@ -78,12 +79,15 @@ notify(PurpleConversation *conv)
 		return 0;
 
 	purplewin = PIDGIN_CONVERSATION(conv)->win;
-	g_object_get(G_OBJECT(purplewin->window), "has-toplevel-focus", &has_focus, NULL);
+	g_object_get(G_OBJECT(purplewin->window), "has-toplevel-focus", &has_focus,
+	             NULL);
 
 	if (!has_focus) {
-		count = GPOINTER_TO_INT(purple_conversation_get_data(conv, "unity-message-count"));
+		count = GPOINTER_TO_INT(purple_conversation_get_data(conv,
+		                        "unity-message-count"));
 		count++;
-		purple_conversation_set_data(conv, "unity-message-count", GINT_TO_POINTER(count));
+		purple_conversation_set_data(conv, "unity-message-count",
+		                             GINT_TO_POINTER(count));
 		update_launcher(purplewin);
 	}
 
@@ -97,7 +101,8 @@ unnotify_cb(GtkWidget *widget, gpointer data, PurpleConversation *conv)
 
 	if (GPOINTER_TO_INT(purple_conversation_get_data(conv, "unity-message-count")) != 0) {
 		purplewin = PIDGIN_CONVERSATION(conv)->win;
-		purple_conversation_set_data(conv, "unity-message-count", GINT_TO_POINTER(0));
+		purple_conversation_set_data(conv, "unity-message-count",
+		                             GINT_TO_POINTER(0));
 		update_launcher(purplewin);
 	}
 
@@ -119,8 +124,10 @@ im_sent_im(PurpleAccount *account, const char *receiver, const char *message)
 {
 	PurpleConversation *conv = NULL;
 	PidginWindow *purplewin = PIDGIN_CONVERSATION(conv)->win;
-	conv = purple_find_conversation_with_account(PURPLE_CONV_TYPE_IM, receiver, account);
-	purple_conversation_set_data(conv, "unity-message-count", GINT_TO_POINTER(0));
+	conv = purple_find_conversation_with_account(PURPLE_CONV_TYPE_IM, receiver,
+	                                             account);
+	purple_conversation_set_data(conv, "unity-message-count",
+	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
 }
 
@@ -130,14 +137,16 @@ chat_sent_im(PurpleAccount *account, const char *message, int id)
 	PurpleConversation *conv = NULL;
 	PidginWindow *purplewin = PIDGIN_CONVERSATION(conv)->win;
 	conv = purple_find_chat(purple_account_get_connection(account), id);
-	purple_conversation_set_data(conv, "unity-message-count", GINT_TO_POINTER(0));
+	purple_conversation_set_data(conv, "unity-message-count",
+	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
 }
 
 static void
 conv_created(PurpleConversation *conv)
 {
-	purple_conversation_set_data(conv, "unity-message-count", GINT_TO_POINTER(0));
+	purple_conversation_set_data(conv, "unity-message-count",
+	                             GINT_TO_POINTER(0));
 	attach_signals(conv);
 }
 
@@ -146,13 +155,14 @@ deleting_conv(PurpleConversation *conv)
 {
 	PidginWindow *purplewin = PIDGIN_CONVERSATION(conv)->win;
 	detach_signals(conv);
-	purple_conversation_set_data(conv, "unity-message-count", GINT_TO_POINTER(0));
+	purple_conversation_set_data(conv, "unity-message-count",
+	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
 }
 
 static void
-message_source_activated (MessagingMenuApp *app, const gchar *id,
-                          gpointer user_data)
+message_source_activated(MessagingMenuApp *app, const gchar *id,
+                         gpointer user_data)
 {
 }
 
@@ -302,7 +312,8 @@ detach_signals(PurpleConversation *conv)
 		g_signal_handler_disconnect(gtkconv->entry, GPOINTER_TO_INT(l->data));
 	g_slist_free(ids);
 
-	purple_conversation_set_data(conv, "unity-message-count", GINT_TO_POINTER(0));
+	purple_conversation_set_data(conv, "unity-message-count",
+	                             GINT_TO_POINTER(0));
 
 	purple_conversation_set_data(conv, "unity-webview-signals", NULL);
 	purple_conversation_set_data(conv, "unity-entry-signals", NULL);
