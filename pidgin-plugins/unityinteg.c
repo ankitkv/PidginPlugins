@@ -99,6 +99,44 @@ message_source_activated (MessagingMenuApp *app, const gchar *id,
 }
 
 static void
+status_changed_cb(PurpleSavedStatus *saved_status)
+{
+	MessagingMenuStatus status = MESSAGING_MENU_STATUS_AVAILABLE;
+
+	switch (purple_savedstatus_get_type(saved_status))
+	{
+	case PURPLE_STATUS_AVAILABLE:
+	case PURPLE_STATUS_MOOD:
+	case PURPLE_STATUS_TUNE:
+	case PURPLE_STATUS_UNSET:
+		status = MESSAGING_MENU_STATUS_AVAILABLE;
+		break;
+
+	case PURPLE_STATUS_AWAY:
+	case PURPLE_STATUS_EXTENDED_AWAY:
+		status = MESSAGING_MENU_STATUS_AWAY;
+		break;
+
+	case PURPLE_STATUS_INVISIBLE:
+		status = MESSAGING_MENU_STATUS_INVISIBLE;
+		break;
+
+	case PURPLE_STATUS_MOBILE:
+	case PURPLE_STATUS_OFFLINE:
+		status = MESSAGING_MENU_STATUS_OFFLINE;
+		break;
+
+	case PURPLE_STATUS_UNAVAILABLE:
+		status = MESSAGING_MENU_STATUS_BUSY;
+		break;
+
+	default:
+		g_assert_not_reached ();
+	}
+	messaging_menu_app_set_status(mmapp, status);
+}
+
+static void
 messaging_menu_status_changed(MessagingMenuApp *mmapp, 
                               MessagingMenuStatus mm_status, gpointer user_data)
 {
@@ -203,8 +241,10 @@ plugin_load(PurplePlugin *plugin)
 {
 	guint id;
 	GList *convs = purple_get_conversations();
+	PurpleSavedStatus *saved_status;
 	void *conv_handle = purple_conversations_get_handle();
 	void *gtk_conv_handle = pidgin_conversations_get_handle();
+	void *savedstat_handle = purple_savedstatuses_get_handle();
 
 	mmapp = messaging_menu_app_new("pidgin.desktop");
 	messaging_menu_app_register(mmapp);
@@ -215,6 +255,12 @@ plugin_load(PurplePlugin *plugin)
 	id = g_signal_connect(mmapp, "status-changed",
 	                       G_CALLBACK (messaging_menu_status_changed), NULL);
 	unity_ids = g_slist_append(unity_ids, GUINT_TO_POINTER(id));
+
+	saved_status = purple_savedstatus_get_current();
+	status_changed_cb(saved_status);
+
+	purple_signal_connect(savedstat_handle, "savedstatus-changed", plugin,
+	                    PURPLE_CALLBACK(status_changed_cb), NULL);
 
 	purple_signal_connect(gtk_conv_handle, "displayed-im-msg", plugin,
 	                    PURPLE_CALLBACK(message_displayed_cb), NULL);
