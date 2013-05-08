@@ -24,7 +24,7 @@
 
 /* To do:
  * - bring conversation window to front when messaging menu source is clicked
- * - fix IM names and icons in messaging menu
+ * - show notifications even if unread messages in the same window
  * - add configuration
  */
 
@@ -90,18 +90,14 @@ conversation_id(PurpleConversation *conv)
 static void
 messaging_menu_add_source(PurpleConversation *conv, gint count)
 {
-	PurpleConvIm *conv_im = purple_conversation_get_im_data(conv);
-	PurpleBuddyIcon *icon = purple_conv_im_get_icon(conv_im);
 	gchar *id = conversation_id(conv);
-	GIcon *gicon = NULL;
 
-	if (!messaging_menu_app_has_source(mmapp, id)) {
-		if (icon != NULL)
-			gicon = g_icon_new_for_string(purple_buddy_icon_get_data(icon, NULL),
-			                              NULL);
-		messaging_menu_app_append_source(mmapp, id, gicon,
-		                                 purple_conversation_get_name(conv));
-	}
+	/* GBytesIcon may be useful for messaging menu source icons using buddy
+	   icon data for IMs */
+	if (!messaging_menu_app_has_source(mmapp, id))
+		messaging_menu_app_append_source(mmapp, id, NULL,
+		                                 purple_conversation_get_title(conv));
+
 	messaging_menu_app_set_source_time(mmapp, id, g_get_real_time());
 	messaging_menu_app_set_source_count(mmapp, id, count);
 	messaging_menu_app_draw_attention(mmapp, id);
@@ -175,9 +171,10 @@ static void
 im_sent_im(PurpleAccount *account, const char *receiver, const char *message)
 {
 	PurpleConversation *conv = NULL;
-	PidginWindow *purplewin = PIDGIN_CONVERSATION(conv)->win;
+	PidginWindow *purplewin = NULL;
 	conv = purple_find_conversation_with_account(PURPLE_CONV_TYPE_IM, receiver,
 	                                             account);
+	purplewin = PIDGIN_CONVERSATION(conv)->win;
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
@@ -188,8 +185,9 @@ static void
 chat_sent_im(PurpleAccount *account, const char *message, int id)
 {
 	PurpleConversation *conv = NULL;
-	PidginWindow *purplewin = PIDGIN_CONVERSATION(conv)->win;
+	PidginWindow *purplewin = NULL;
 	conv = purple_find_chat(purple_account_get_connection(account), id);
+	purplewin = PIDGIN_CONVERSATION(conv)->win;
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
