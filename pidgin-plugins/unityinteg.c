@@ -55,10 +55,8 @@ update_launcher(PidginWindow *purplewin)
 		}
 	}
 
-	if (launcher != NULL)
-	{
-		if (count > 0)
-		{
+	if (launcher != NULL) {
+		if (count > 0) {
 			unity_launcher_entry_set_count(launcher, count);
 			unity_launcher_entry_set_count_visible(launcher, TRUE);
 		} else {
@@ -89,6 +87,8 @@ notify(PurpleConversation *conv)
 		purple_conversation_set_data(conv, "unity-message-count",
 		                             GINT_TO_POINTER(count));
 		update_launcher(purplewin);
+
+		// TODO: add/update source
 	}
 
 	return 0;
@@ -104,6 +104,8 @@ unnotify_cb(GtkWidget *widget, gpointer data, PurpleConversation *conv)
 		purple_conversation_set_data(conv, "unity-message-count",
 		                             GINT_TO_POINTER(0));
 		update_launcher(purplewin);
+
+		// TODO: remove source
 	}
 
 	return 0;
@@ -129,6 +131,8 @@ im_sent_im(PurpleAccount *account, const char *receiver, const char *message)
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
+
+	// TODO: remove source
 }
 
 static void
@@ -140,6 +144,8 @@ chat_sent_im(PurpleAccount *account, const char *message, int id)
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
+
+	// TODO: remove source
 }
 
 static void
@@ -158,12 +164,15 @@ deleting_conv(PurpleConversation *conv)
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
+
+	// TODO: remove source
 }
 
 static void
 message_source_activated(MessagingMenuApp *app, const gchar *id,
                          gpointer user_data)
 {
+	// TODO: handle source
 }
 
 static PurpleSavedStatus *
@@ -188,8 +197,7 @@ status_changed_cb(PurpleSavedStatus *saved_status)
 {
 	MessagingMenuStatus status = MESSAGING_MENU_STATUS_AVAILABLE;
 
-	switch (purple_savedstatus_get_type(saved_status))
-	{
+	switch (purple_savedstatus_get_type(saved_status)) {
 	case PURPLE_STATUS_AVAILABLE:
 	case PURPLE_STATUS_MOOD:
 	case PURPLE_STATUS_TUNE:
@@ -228,8 +236,7 @@ messaging_menu_status_changed(MessagingMenuApp *mmapp,
 	PurpleSavedStatus *saved_status;
 	PurpleStatusPrimitive primitive = PURPLE_STATUS_UNSET;
 
-	switch (mm_status)
-	{
+	switch (mm_status) {
 	case MESSAGING_MENU_STATUS_AVAILABLE:
 		primitive = PURPLE_STATUS_AVAILABLE;
 		break;
