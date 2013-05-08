@@ -23,12 +23,12 @@
  *
  * Configuration options to add:
  * [ ] Messaging menu integration
- *     o Show last message time
- *     o Show message count
+ *     o Show last message time (unity-message-time)
+ *     o Show message count (unity-message-count)
  *     o None
  * [ ] Launcher icon integration
- *     o Show number of messages
- *     o Show number of sources
+ *     o Show number of messages (unity-message-count)
+ *     o Show number of sources (n_sources)
  *     o None
  */
 
@@ -46,8 +46,9 @@
 #include <messaging-menu.h>
 
 static MessagingMenuApp *mmapp;
-UnityLauncherEntry *launcher = NULL;
-static GSList *unity_ids = NULL;
+static UnityLauncherEntry *launcher;
+static GSList *unity_ids;
+static guint n_sources;
 
 static int attach_signals(PurpleConversation *conv);
 static void detach_signals(PurpleConversation *conv);
@@ -98,10 +99,11 @@ messaging_menu_add_source(PurpleConversation *conv, gint count)
 
 	/* GBytesIcon may be useful for messaging menu source icons using buddy
 	   icon data for IMs */
-	if (!messaging_menu_app_has_source(mmapp, id))
+	if (!messaging_menu_app_has_source(mmapp, id)) {
 		messaging_menu_app_append_source(mmapp, id, NULL,
 		                                 purple_conversation_get_title(conv));
-
+		++n_sources;
+	}
 	messaging_menu_app_set_source_time(mmapp, id, g_get_real_time());
 	messaging_menu_app_set_source_count(mmapp, id, count);
 	messaging_menu_app_draw_attention(mmapp, id);
@@ -113,7 +115,10 @@ static void
 messaging_menu_remove_source(PurpleConversation *conv)
 {
 	gchar *id = conversation_id(conv);
-	messaging_menu_app_remove_source(mmapp, id);
+	if (messaging_menu_app_has_source(mmapp, id)) {
+		messaging_menu_app_remove_source(mmapp, id);
+		--n_sources;
+	}
 	g_free(id);
 }
 
@@ -135,6 +140,8 @@ notify(PurpleConversation *conv)
 		count++;
 		purple_conversation_set_data(conv, "unity-message-count",
 		                             GINT_TO_POINTER(count));
+		purple_conversation_set_data(conv, "unity-message-time",
+		                             GINT_TO_POINTER(g_get_real_time()));
 		update_launcher(purplewin);
 		messaging_menu_add_source(conv, count);
 	}
@@ -142,19 +149,20 @@ notify(PurpleConversation *conv)
 	return 0;
 }
 
+static void
+unnotify(PurpleConversation *conv)
+{
+	PidginWindow *purplewin = PIDGIN_CONVERSATION(conv)->win;
+	purple_conversation_set_data(conv, "unity-message-count",
+	                             GINT_TO_POINTER(0));
+	update_launcher(purplewin);
+	messaging_menu_remove_source(conv);
+}
+
 static int
 unnotify_cb(GtkWidget *widget, gpointer data, PurpleConversation *conv)
 {
-	PidginWindow *purplewin = NULL;
-
-	if (GPOINTER_TO_INT(purple_conversation_get_data(conv, "unity-message-count")) != 0) {
-		purplewin = PIDGIN_CONVERSATION(conv)->win;
-		purple_conversation_set_data(conv, "unity-message-count",
-		                             GINT_TO_POINTER(0));
-		update_launcher(purplewin);
-		messaging_menu_remove_source(conv);
-	}
-
+	unnotify(conv);
 	return 0;
 }
 
@@ -172,27 +180,17 @@ static void
 im_sent_im(PurpleAccount *account, const char *receiver, const char *message)
 {
 	PurpleConversation *conv = NULL;
-	PidginWindow *purplewin = NULL;
 	conv = purple_find_conversation_with_account(PURPLE_CONV_TYPE_IM, receiver,
 	                                             account);
-	purplewin = PIDGIN_CONVERSATION(conv)->win;
-	purple_conversation_set_data(conv, "unity-message-count",
-	                             GINT_TO_POINTER(0));
-	update_launcher(purplewin);
-	messaging_menu_remove_source(conv);
+	unnotify(conv);
 }
 
 static void
 chat_sent_im(PurpleAccount *account, const char *message, int id)
 {
 	PurpleConversation *conv = NULL;
-	PidginWindow *purplewin = NULL;
 	conv = purple_find_chat(purple_account_get_connection(account), id);
-	purplewin = PIDGIN_CONVERSATION(conv)->win;
-	purple_conversation_set_data(conv, "unity-message-count",
-	                             GINT_TO_POINTER(0));
-	update_launcher(purplewin);
-	messaging_menu_remove_source(conv);
+	unnotify(conv);
 }
 
 static void
@@ -200,18 +198,16 @@ conv_created(PurpleConversation *conv)
 {
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
+	purple_conversation_set_data(conv, "unity-message-time",
+	                             GINT_TO_POINTER(g_get_real_time()));
 	attach_signals(conv);
 }
 
 static void
 deleting_conv(PurpleConversation *conv)
 {
-	PidginWindow *purplewin = PIDGIN_CONVERSATION(conv)->win;
 	detach_signals(conv);
-	purple_conversation_set_data(conv, "unity-message-count",
-	                             GINT_TO_POINTER(0));
-	update_launcher(purplewin);
-	messaging_menu_remove_source(conv);
+	unnotify(conv);
 }
 
 static void
@@ -232,10 +228,8 @@ message_source_activated(MessagingMenuApp *app, const gchar *id,
 	conv_type = type[0] - '0';
 	account = purple_accounts_find(aname, protocol);
 	conv = purple_find_conversation_with_account(conv_type, cname, account);
-	purplewin = PIDGIN_CONVERSATION(conv)->win;
-	purple_conversation_set_data(conv, "unity-message-count",
-	                             GINT_TO_POINTER(0));
-	update_launcher(purplewin);
+	--n_sources;
+	unnotify(conv);
 	pidgin_conv_window_switch_gtkconv(purplewin, PIDGIN_CONVERSATION(conv));
 	gdk_window_focus(gtk_widget_get_window(purplewin->window), time(NULL));
 
@@ -388,6 +382,8 @@ detach_signals(PurpleConversation *conv)
 
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
+	purple_conversation_set_data(conv, "unity-message-time",
+	                             GINT_TO_POINTER(g_get_real_time()));
 
 	purple_conversation_set_data(conv, "unity-webview-signals", NULL);
 	purple_conversation_set_data(conv, "unity-entry-signals", NULL);
