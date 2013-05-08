@@ -24,7 +24,6 @@
 
 /* To do:
  * - bring conversation window to front when messaging menu source is clicked
- * - show notifications even if unread messages in the same window
  * - add configuration
  */
 
@@ -102,7 +101,6 @@ messaging_menu_add_source(PurpleConversation *conv, gint count)
 	messaging_menu_app_set_source_count(mmapp, id, count);
 	messaging_menu_app_draw_attention(mmapp, id);
 
-	g_clear_object(&gicon);
 	g_free(id);
 }
 
@@ -118,17 +116,15 @@ static int
 notify(PurpleConversation *conv)
 {
 	gint count;
-	gboolean has_focus;
 	PidginWindow *purplewin = NULL;
-
 	if (conv == NULL || PIDGIN_CONVERSATION(conv) == NULL)
 		return 0;
 
 	purplewin = PIDGIN_CONVERSATION(conv)->win;
-	g_object_get(G_OBJECT(purplewin->window), "has-toplevel-focus", &has_focus,
-	             NULL);
 
-	if (!has_focus) {
+	if (!pidgin_conv_window_has_focus(purplewin) ||
+		!pidgin_conv_window_is_active_conversation(conv))
+	{
 		count = GPOINTER_TO_INT(purple_conversation_get_data(conv,
 		                        "unity-message-count"));
 		count++;
