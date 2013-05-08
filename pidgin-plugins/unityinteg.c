@@ -24,8 +24,11 @@
 
 #include "internal.h"
 #include "debug.h"
-#include "gtkplugin.h"
 #include "version.h"
+#include "account.h"
+#include "savedstatuses.h"
+
+#include "gtkplugin.h"
 #include "gtkconv.h"
 
 #include <unity.h>
@@ -72,6 +75,23 @@ deleting_conv(PurpleConversation *conv)
 {
 }
 
+static PurpleSavedStatus *
+create_transient_status(PurpleStatusPrimitive primitive, PurpleStatusType *status_type)
+{
+	PurpleSavedStatus *saved_status = purple_savedstatus_new(NULL, primitive);
+
+	if(status_type != NULL) {
+		GList *tmp, *active_accts = purple_accounts_get_all_active();
+		for (tmp = active_accts; tmp != NULL; tmp = tmp->next) {
+			purple_savedstatus_set_substatus(saved_status,
+				(PurpleAccount*) tmp->data, status_type, NULL);
+		}
+		g_list_free(active_accts);
+	}
+
+	return saved_status;
+}
+
 static void
 message_source_activated (MessagingMenuApp *app, const gchar *id,
                           gpointer user_data)
@@ -82,26 +102,39 @@ static void
 messaging_menu_status_changed(MessagingMenuApp *mmapp, 
                               MessagingMenuStatus mm_status, gpointer user_data)
 {
+	PurpleSavedStatus *saved_status;
+	PurpleStatusPrimitive primitive = PURPLE_STATUS_UNSET;
+
 	switch (mm_status)
 	{
 	case MESSAGING_MENU_STATUS_AVAILABLE:
+		primitive = PURPLE_STATUS_AVAILABLE;
 		break;
 
 	case MESSAGING_MENU_STATUS_AWAY:
+		primitive = PURPLE_STATUS_AWAY;
 		break;
 
 	case MESSAGING_MENU_STATUS_BUSY:
+		primitive = PURPLE_STATUS_UNAVAILABLE;
 		break;
 
 	case MESSAGING_MENU_STATUS_INVISIBLE:
+		primitive = PURPLE_STATUS_INVISIBLE;
 		break;
 
 	case MESSAGING_MENU_STATUS_OFFLINE:
+		primitive = PURPLE_STATUS_OFFLINE;
 		break;
 
 	default:
 		g_assert_not_reached ();
 	}
+
+	saved_status = purple_savedstatus_find_transient_by_type_and_message(primitive, NULL);
+	if (saved_status == NULL)
+		saved_status = create_transient_status(primitive, NULL);
+	purple_savedstatus_activate(saved_status);
 }
 
 static int
