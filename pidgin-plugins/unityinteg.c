@@ -22,7 +22,11 @@
  * Ensure pidgin.desktop has X-MessagingMenu-UsesChatSection=true
  */
 
-// TODO: add configuration
+/* To do:
+ * - bring conversation window to front when messaging menu source is clicked
+ * - fix IM names and icons in messaging menu
+ * - add configuration
+ */
 
 #include "internal.h"
 #include "debug.h"
@@ -233,7 +237,6 @@ message_source_activated(MessagingMenuApp *app, const gchar *id,
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
-	// TODO: show conversation
 
 	g_strfreev (sections);
 }
