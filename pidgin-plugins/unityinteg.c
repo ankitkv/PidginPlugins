@@ -66,6 +66,25 @@ update_launcher(PidginWindow *purplewin)
 	}
 }
 
+static gchar *
+conversation_id(PurpleConversation *conv)
+{
+	return g_strconcat ("todo", NULL); // TODO: concat all strings
+}
+
+
+static void
+messaging_menu_add_source(const gchar *source_id, gint count)
+{
+	// TODO: add source
+}
+
+static void
+messaging_menu_remove_source(const gchar *source_id)
+{
+	// TODO: remove source
+}
+
 static int
 notify(PurpleConversation *conv)
 {
@@ -87,8 +106,7 @@ notify(PurpleConversation *conv)
 		purple_conversation_set_data(conv, "unity-message-count",
 		                             GINT_TO_POINTER(count));
 		update_launcher(purplewin);
-
-		// TODO: add/update source
+		messaging_menu_add_source(conversation_id(conv), count);
 	}
 
 	return 0;
@@ -104,8 +122,7 @@ unnotify_cb(GtkWidget *widget, gpointer data, PurpleConversation *conv)
 		purple_conversation_set_data(conv, "unity-message-count",
 		                             GINT_TO_POINTER(0));
 		update_launcher(purplewin);
-
-		// TODO: remove source
+		messaging_menu_remove_source(conversation_id(conv));
 	}
 
 	return 0;
@@ -131,8 +148,7 @@ im_sent_im(PurpleAccount *account, const char *receiver, const char *message)
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
-
-	// TODO: remove source
+	messaging_menu_remove_source(conversation_id(conv));
 }
 
 static void
@@ -144,8 +160,7 @@ chat_sent_im(PurpleAccount *account, const char *message, int id)
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
-
-	// TODO: remove source
+	messaging_menu_remove_source(conversation_id(conv));
 }
 
 static void
@@ -164,8 +179,7 @@ deleting_conv(PurpleConversation *conv)
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher(purplewin);
-
-	// TODO: remove source
+	messaging_menu_remove_source(conversation_id(conv));
 }
 
 static void
