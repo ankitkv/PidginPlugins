@@ -71,16 +71,15 @@ static gchar *
 conversation_id(PurpleConversation *conv)
 {
 	PurpleConversationType conv_type = purple_conversation_get_type(conv);
-	char type[2] = "0";
-	const char *cname = purple_conversation_get_name(conv);
 	PurpleAccount *account = purple_conversation_get_account(conv);
-	const char *aname = purple_account_get_username(account);
-	const char *protocol = purple_account_get_protocol_id(account);
+	char type[2] = "0";
 	type[0] += conv_type;
 
-	return g_strconcat(type, ":", cname, ":", aname, ":", protocol, NULL);
+	return g_strconcat(type, ":",
+	                   purple_conversation_get_name(conv), ":",
+	                   purple_account_get_username(account), ":",
+	                   purple_account_get_protocol_id(account), NULL);
 }
-
 
 static void
 messaging_menu_add_source(PurpleConversation *conv, gint count)
