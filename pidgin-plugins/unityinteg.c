@@ -39,6 +39,11 @@ UnityLauncherEntry *launcher = NULL;
 static GSList *unity_ids = NULL;
 static gint n_sources;
 
+static void unnotify(PurpleConversation *conv, gboolean reset);
+
+static int attach_signals(PurpleConversation *conv);
+static void detach_signals(PurpleConversation *conv);
+
 static void update_launcher (gint count)
 {
 	if (launcher != NULL)
@@ -54,9 +59,67 @@ static void update_launcher (gint count)
 	}
 }
 
+static guint
+count_messages(PidginWindow *purplewin)
+{
+	guint count = 0;
+	GList *convs = NULL, *l;
+
+	for (convs = purplewin->gtkconvs; convs != NULL; convs = convs->next) {
+		PidginConversation *conv = convs->data;
+		for (l = conv->convs; l != NULL; l = l->next) {
+			count += GPOINTER_TO_INT(purple_conversation_get_data(l->data, "unity-message-count"));
+		}
+	}
+
+	return count;
+}
+
+static int
+notify(PurpleConversation *conv, gboolean increment)
+{
+	gint count;
+	gboolean has_focus;
+	PidginWindow *purplewin = NULL;
+
+	if (conv == NULL || PIDGIN_CONVERSATION(conv) == NULL)
+		return 0;
+
+	/* We want to remove the notifications, but not reset the counter */
+	unnotify(conv, FALSE);
+
+	purplewin = PIDGIN_CONVERSATION(conv)->win;
+
+	g_object_get(G_OBJECT(purplewin->window),
+	             "has-toplevel-focus", &has_focus, NULL);
+
+	if (increment) {
+		count = GPOINTER_TO_INT(purple_conversation_get_data(conv, "unity-message-count"));
+		count++;
+		purple_conversation_set_data(conv, "unity-message-count", GINT_TO_POINTER(count));
+	}
+
+	return 0;
+}
+
+static void
+unnotify(PurpleConversation *conv, gboolean reset)
+{
+	g_return_if_fail(conv != NULL);
+	if (PIDGIN_CONVERSATION(conv) == NULL)
+		return;
+
+	if (reset)
+		purple_conversation_set_data(conv, "unity-message-count", GINT_TO_POINTER(0));
+	return;
+}
+
 static int
 unnotify_cb(GtkWidget *widget, gpointer data, PurpleConversation *conv)
 {
+	if (GPOINTER_TO_INT(purple_conversation_get_data(conv, "unity-message-count")) != 0)
+		unnotify(conv, TRUE);
+
 	return 0;
 }
 
@@ -64,32 +127,41 @@ static gboolean
 message_displayed_cb(PurpleAccount *account, const char *who, char *message,
                      PurpleConversation *conv, PurpleMessageFlags flags)
 {
-	return FALSE;
-}
+	if ((flags & PURPLE_MESSAGE_RECV) && !(flags & PURPLE_MESSAGE_DELAYED))
+		notify(conv, TRUE);
 
-static void
-conv_switched(PurpleConversation *conv)
-{
+	return FALSE;
 }
 
 static void
 im_sent_im(PurpleAccount *account, const char *receiver, const char *message)
 {
+	PurpleConversation *conv = NULL;
+	conv = purple_find_conversation_with_account(PURPLE_CONV_TYPE_IM, receiver, account);
+	unnotify(conv, TRUE);
 }
 
 static void
 chat_sent_im(PurpleAccount *account, const char *message, int id)
 {
+	PurpleConversation *conv = NULL;
+	conv = purple_find_chat(purple_account_get_connection(account), id);
+	unnotify(conv, TRUE);
 }
 
 static void
 conv_created(PurpleConversation *conv)
 {
+	purple_conversation_set_data(conv, "unity-message-count",
+	                           GINT_TO_POINTER(0));
+	attach_signals(conv);
 }
 
 static void
 deleting_conv(PurpleConversation *conv)
 {
+	detach_signals(conv);
+	purple_conversation_set_data(conv, "unity-message-count", GINT_TO_POINTER(0));
 }
 
 static void
@@ -221,8 +293,8 @@ attach_signals(PurpleConversation *conv)
 	                      G_CALLBACK(unnotify_cb), conv);
 	entry_ids = g_slist_append(entry_ids, GUINT_TO_POINTER(id));
 
-	purple_conversation_set_data(conv, "messagingmenu-webview-signals", webview_ids);
-	purple_conversation_set_data(conv, "messagingmenu-entry-signals", entry_ids);
+	purple_conversation_set_data(conv, "unity-webview-signals", webview_ids);
+	purple_conversation_set_data(conv, "unity-entry-signals", entry_ids);
 
 	return 0;
 }
@@ -237,20 +309,20 @@ detach_signals(PurpleConversation *conv)
 	if (!gtkconv)
 		return;
 
-	ids = purple_conversation_get_data(conv, "messagingmenu-webview-signals");
+	ids = purple_conversation_get_data(conv, "unity-webview-signals");
 	for (l = ids; l != NULL; l = l->next)
 		g_signal_handler_disconnect(gtkconv->webview, GPOINTER_TO_INT(l->data));
 	g_slist_free(ids);
 
-	ids = purple_conversation_get_data(conv, "messagingmenu-entry-signals");
+	ids = purple_conversation_get_data(conv, "unity-entry-signals");
 	for (l = ids; l != NULL; l = l->next)
 		g_signal_handler_disconnect(gtkconv->entry, GPOINTER_TO_INT(l->data));
 	g_slist_free(ids);
 
-	purple_conversation_set_data(conv, "messagingmenu-message-count", GINT_TO_POINTER(0));
+	purple_conversation_set_data(conv, "unity-message-count", GINT_TO_POINTER(0));
 
-	purple_conversation_set_data(conv, "messagingmenu-webview-signals", NULL);
-	purple_conversation_set_data(conv, "messagingmenu-entry-signals", NULL);
+	purple_conversation_set_data(conv, "unity-webview-signals", NULL);
+	purple_conversation_set_data(conv, "unity-entry-signals", NULL);
 }
 
 static gboolean
@@ -285,8 +357,6 @@ plugin_load(PurplePlugin *plugin)
 	                    PURPLE_CALLBACK(message_displayed_cb), NULL);
 	purple_signal_connect(gtk_conv_handle, "displayed-chat-msg", plugin,
 	                    PURPLE_CALLBACK(message_displayed_cb), NULL);
-	purple_signal_connect(gtk_conv_handle, "conversation-switched", plugin,
-	                    PURPLE_CALLBACK(conv_switched), NULL);
 	purple_signal_connect(conv_handle, "sent-im-msg", plugin,
 	                    PURPLE_CALLBACK(im_sent_im), NULL);
 	purple_signal_connect(conv_handle, "sent-chat-msg", plugin,
