@@ -18,6 +18,10 @@
  *
  */
 
+/* NOTE:
+ * Ensure pidgin.desktop has X-MessagingMenu-UsesChatSection=true
+ */
+
 #include "internal.h"
 #include "debug.h"
 #include "gtkplugin.h"
@@ -234,8 +238,8 @@ static PurplePluginInfo info =
 	NULL,                                             /**< dependencies   */
 	PURPLE_PRIORITY_DEFAULT,                          /**< priority       */
 
-	"ankitkv-unityinteg",                          /**< id             */
-	"Unity Integration",                     /**< name           */
+	"ankitkv-unityinteg",                             /**< id             */
+	"Unity Integration",                              /**< name           */
 	"0.1",                                            /**< version        */
 	                                                  /**  summary        */
 	"Provides integration with Unity.",
