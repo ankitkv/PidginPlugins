@@ -39,6 +39,9 @@
 static MessagingMenuApp *mmapp = NULL;
 static UnityLauncherEntry *launcher = NULL;
 static guint n_sources = 0;
+static gboolean launcher_disabled = FALSE;
+static gint launcher_count;
+static gboolean messaging_menu_disabled = FALSE;
 
 enum {
 	LAUNCHER_COUNT_DISABLE,
@@ -61,24 +64,32 @@ update_launcher()
 {
 	guint count = 0;
 	GList *convs = NULL, *l;
+	g_return_if_fail(launcher != NULL && !launcher_disabled);
 
-	for (convs = purple_get_conversations(); convs != NULL; convs = convs->next) {
-		PidginConversation *conv = convs->data;
-		for (l = conv->convs; l != NULL; l = l->next) {
-			count += GPOINTER_TO_INT(purple_conversation_get_data(l->data,
-			                         "unity-message-count"));
+	if (launcher_count == LAUNCHER_COUNT_MESSAGES) {
+		for (convs = purple_get_conversations(); convs != NULL; convs = convs->next) {
+			PidginConversation *conv = convs->data;
+			for (l = conv->convs; l != NULL; l = l->next) {
+				count += GPOINTER_TO_INT(purple_conversation_get_data(l->data,
+				                         "unity-message-count"));
+			}
 		}
+	} else {
+		count = n_sources;
 	}
 
 	if (launcher != NULL) {
-		if (count > 0) {
-			unity_launcher_entry_set_count(launcher, count);
+		if (count > 0)
 			unity_launcher_entry_set_count_visible(launcher, TRUE);
-		} else {
-			unity_launcher_entry_set_count(launcher, count);
+		else
 			unity_launcher_entry_set_count_visible(launcher, FALSE);
-		}
+		unity_launcher_entry_set_count(launcher, count);
 	}
+}
+
+static void
+refresh_messaging_menu()
+{
 }
 
 static gchar *
@@ -156,7 +167,6 @@ notify(PurpleConversation *conv)
 static void
 unnotify(PurpleConversation *conv)
 {
-	PidginWindow *purplewin = PIDGIN_CONVERSATION(conv)->win;
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher();
@@ -342,9 +352,14 @@ launcher_config_cb(GtkWidget *widget, gpointer data)
 
 	if (option == LAUNCHER_COUNT_DISABLE) {
 		purple_prefs_set_bool("/plugins/gtk/unity/enable_launcher", FALSE);
+		unity_launcher_entry_set_count_visible(launcher, FALSE);
+		launcher_disabled = TRUE;
 	} else {
 		purple_prefs_set_bool("/plugins/gtk/unity/enable_launcher", TRUE);
 		purple_prefs_set_int("/plugins/gtk/unity/launcher_count", option);
+		launcher_count = option;
+		launcher_disabled = FALSE;
+		update_launcher();
 	}
 }
 
@@ -360,6 +375,8 @@ messaging_menu_config_cb(GtkWidget *widget, gpointer data)
 		purple_prefs_set_bool("/plugins/gtk/unity/enable_messaging_menu", TRUE);
 		purple_prefs_set_int("/plugins/gtk/unity/messaging_menu_text", option);
 	}
+
+	refresh_messaging_menu();
 }
 
 static int
@@ -530,6 +547,9 @@ plugin_load(PurplePlugin *plugin)
 	                    PURPLE_CALLBACK(status_changed_cb), NULL);
 
 	launcher = unity_launcher_entry_get_for_desktop_id("pidgin.desktop");
+	if (purple_prefs_get_bool("/plugins/gtk/unity/enable_launcher") == FALSE)
+		launcher_disabled = TRUE;
+	launcher_count = purple_prefs_get_int("/plugins/gtk/unity/launcher_count");
 
 	purple_signal_connect(gtk_conv_handle, "displayed-im-msg", plugin,
 	                    PURPLE_CALLBACK(message_displayed_cb), NULL);
