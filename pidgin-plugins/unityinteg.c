@@ -27,11 +27,9 @@
 // - mm time wrong
 
 #include "internal.h"
-#include "debug.h"
 #include "version.h"
 #include "account.h"
 #include "savedstatuses.h"
-#include "buddyicon.h"
 
 #include "gtkplugin.h"
 #include "gtkconv.h"
