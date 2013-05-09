@@ -35,6 +35,7 @@ static char *colornicks_logger_read(PurpleLog *log, PurpleLogReadFlags *flags);
 static int colornicks_logger_total_size(PurpleLogType type, const char *name, PurpleAccount *account);
 
 static PurpleLogLogger *colornicks_logger;
+static gchar *old_format = NULL;
 
 static char *
 get_nick_color(PidginConversation *gtkconv, const char *name)
@@ -352,9 +353,6 @@ static int colornicks_logger_total_size(PurpleLogType type, const char *name, Pu
 static gboolean
 plugin_load(PurplePlugin *plugin)
 {
-// TODO: backup old format and reapply it
-//	purple_prefs_set_string("/purple/logging/format", "colornicks");
-
 	colornicks_logger = purple_log_logger_new("colornicks", "Colored nicks", 11,
 									  NULL,
 									  colornicks_logger_write,
@@ -369,6 +367,9 @@ plugin_load(PurplePlugin *plugin)
 									  purple_log_common_is_deletable);
 	purple_log_logger_add(colornicks_logger);
 
+	old_format = g_strdup(purple_prefs_get_string("/purple/logging/format"));
+	if (g_strcmp0(old_format, "html") == 0)
+		purple_prefs_set_string("/purple/logging/format", "colornicks");
 	return TRUE;
 }
 
@@ -377,6 +378,13 @@ plugin_unload(PurplePlugin *plugin)
 {
 	purple_log_logger_remove(colornicks_logger);
 	purple_log_logger_free(colornicks_logger);
+	if (g_strcmp0(purple_prefs_get_string("/purple/logging/format"), "colornicks") == 0) {
+		if (g_strcmp0(old_format, "colornicks") == 0)
+			purple_prefs_set_string("/purple/logging/format", "html");
+		else
+			purple_prefs_set_string("/purple/logging/format", old_format);
+	}
+	g_free(old_format);
 	return TRUE;
 }
 
