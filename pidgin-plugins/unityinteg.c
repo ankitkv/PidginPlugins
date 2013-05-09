@@ -22,10 +22,6 @@
  * Ensure pidgin.desktop has X-MessagingMenu-UsesChatSection=true
  */
 
-// bugs:
-// - launcher icon count missing
-// - mm time wrong
-
 #include "internal.h"
 #include "version.h"
 #include "account.h"
@@ -99,7 +95,7 @@ conversation_id(PurpleConversation *conv)
 }
 
 static void
-messaging_menu_add_source(PurpleConversation *conv, gint count, gint time)
+messaging_menu_add_source(PurpleConversation *conv, gint count)
 {
 	gchar *id = conversation_id(conv);
 
@@ -111,7 +107,7 @@ messaging_menu_add_source(PurpleConversation *conv, gint count, gint time)
 		++n_sources;
 	}
 	if (messaging_menu_text == MESSAGING_MENU_TIME)
-		messaging_menu_app_set_source_time(mmapp, id, time);
+		messaging_menu_app_set_source_time(mmapp, id, g_get_real_time());
 	else if (messaging_menu_text == MESSAGING_MENU_COUNT)
 		messaging_menu_app_set_source_count(mmapp, id, count);
 	messaging_menu_app_draw_attention(mmapp, id);
@@ -138,15 +134,14 @@ refill_messaging_menu()
 	for (convs = purple_get_conversations(); convs != NULL; convs = convs->next) {
 		PurpleConversation *conv = convs->data;
 		messaging_menu_add_source(conv,
-			GPOINTER_TO_INT(purple_conversation_get_data(conv, "unity-message-count")),
-			GPOINTER_TO_INT(purple_conversation_get_data(conv, "unity-message-time")));
+			GPOINTER_TO_INT(purple_conversation_get_data(conv, "unity-message-count")));
 	}
 }
 
 static int
 notify(PurpleConversation *conv)
 {
-	gint count, time;
+	gint count;
 	PidginWindow *purplewin = NULL;
 	if (conv == NULL || PIDGIN_CONVERSATION(conv) == NULL)
 		return 0;
@@ -161,11 +156,8 @@ notify(PurpleConversation *conv)
 		count++;
 		purple_conversation_set_data(conv, "unity-message-count",
 		                             GINT_TO_POINTER(count));
-		time = g_get_real_time();
-		purple_conversation_set_data(conv, "unity-message-time",
-		                             GINT_TO_POINTER(time));
 		update_launcher();
-		messaging_menu_add_source(conv, count, time);
+		messaging_menu_add_source(conv, count);
 	}
 
 	return 0;
@@ -219,8 +211,6 @@ conv_created(PurpleConversation *conv)
 {
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
-	purple_conversation_set_data(conv, "unity-message-time",
-	                             GINT_TO_POINTER(g_get_real_time()));
 	attach_signals(conv);
 }
 
@@ -434,8 +424,6 @@ detach_signals(PurpleConversation *conv)
 
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
-	purple_conversation_set_data(conv, "unity-message-time",
-	                             GINT_TO_POINTER(g_get_real_time()));
 
 	purple_conversation_set_data(conv, "unity-webview-signals", NULL);
 	purple_conversation_set_data(conv, "unity-entry-signals", NULL);
