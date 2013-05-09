@@ -139,7 +139,7 @@ refill_messaging_menu()
 }
 
 static int
-notify(PurpleConversation *conv)
+alert(PurpleConversation *conv)
 {
 	gint count;
 	PidginWindow *purplewin = NULL;
@@ -164,7 +164,7 @@ notify(PurpleConversation *conv)
 }
 
 static void
-unnotify(PurpleConversation *conv)
+unalert(PurpleConversation *conv)
 {
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
@@ -173,9 +173,9 @@ unnotify(PurpleConversation *conv)
 }
 
 static int
-unnotify_cb(GtkWidget *widget, gpointer data, PurpleConversation *conv)
+unalert_cb(GtkWidget *widget, gpointer data, PurpleConversation *conv)
 {
-	unnotify(conv);
+	unalert(conv);
 	return 0;
 }
 
@@ -184,7 +184,7 @@ message_displayed_cb(PurpleAccount *account, const char *who, char *message,
                      PurpleConversation *conv, PurpleMessageFlags flags)
 {
 	if ((flags & PURPLE_MESSAGE_RECV) && !(flags & PURPLE_MESSAGE_DELAYED))
-		notify(conv);
+		alert(conv);
 
 	return FALSE;
 }
@@ -195,7 +195,7 @@ im_sent_im(PurpleAccount *account, const char *receiver, const char *message)
 	PurpleConversation *conv = NULL;
 	conv = purple_find_conversation_with_account(PURPLE_CONV_TYPE_IM, receiver,
 	                                             account);
-	unnotify(conv);
+	unalert(conv);
 }
 
 static void
@@ -203,7 +203,7 @@ chat_sent_im(PurpleAccount *account, const char *message, int id)
 {
 	PurpleConversation *conv = NULL;
 	conv = purple_find_chat(purple_account_get_connection(account), id);
-	unnotify(conv);
+	unalert(conv);
 }
 
 static void
@@ -218,7 +218,7 @@ static void
 deleting_conv(PurpleConversation *conv)
 {
 	detach_signals(conv);
-	unnotify(conv);
+	unalert(conv);
 }
 
 static void
@@ -240,7 +240,7 @@ message_source_activated(MessagingMenuApp *app, const gchar *id,
 	account = purple_accounts_find(aname, protocol);
 	conv = purple_find_conversation_with_account(conv_type, cname, account);
 	--n_sources;
-	unnotify(conv);
+	unalert(conv);
 
 	purplewin = PIDGIN_CONVERSATION(conv)->win;
 	pidgin_conv_window_switch_gtkconv(purplewin, PIDGIN_CONVERSATION(conv));
@@ -378,23 +378,23 @@ attach_signals(PurpleConversation *conv)
 		return 0;
 
 	id = g_signal_connect(G_OBJECT(gtkconv->entry), "focus-in-event",
-	                      G_CALLBACK(unnotify_cb), conv);
+	                      G_CALLBACK(unalert_cb), conv);
 	entry_ids = g_slist_append(entry_ids, GUINT_TO_POINTER(id));
 
 	id = g_signal_connect(G_OBJECT(gtkconv->webview), "focus-in-event",
-	                      G_CALLBACK(unnotify_cb), conv);
+	                      G_CALLBACK(unalert_cb), conv);
 	webview_ids = g_slist_append(webview_ids, GUINT_TO_POINTER(id));
 
 	id = g_signal_connect(G_OBJECT(gtkconv->entry), "button-press-event",
-	                      G_CALLBACK(unnotify_cb), conv);
+	                      G_CALLBACK(unalert_cb), conv);
 	entry_ids = g_slist_append(entry_ids, GUINT_TO_POINTER(id));
 
 	id = g_signal_connect(G_OBJECT(gtkconv->webview), "button-press-event",
-	                      G_CALLBACK(unnotify_cb), conv);
+	                      G_CALLBACK(unalert_cb), conv);
 	webview_ids = g_slist_append(webview_ids, GUINT_TO_POINTER(id));
 
 	id = g_signal_connect(G_OBJECT(gtkconv->entry), "key-press-event",
-	                      G_CALLBACK(unnotify_cb), conv);
+	                      G_CALLBACK(unalert_cb), conv);
 	entry_ids = g_slist_append(entry_ids, GUINT_TO_POINTER(id));
 
 	purple_conversation_set_data(conv, "unity-webview-signals", webview_ids);
@@ -548,7 +548,7 @@ plugin_unload(PurplePlugin *plugin)
 	GList *convs = purple_get_conversations();
 	while (convs) {
 		PurpleConversation *conv = (PurpleConversation *)convs->data;
-		unnotify(conv);
+		unalert(conv);
 		detach_signals(conv);
 		convs = convs->next;
 	}
