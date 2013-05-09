@@ -21,6 +21,7 @@
 /* NOTE:
  * Ensure pidgin.desktop has X-MessagingMenu-UsesChatSection=true
  * to use the chat status icons of the messaging menu
+ * Perhaps add it to pidgin.desktop.in?
  */
 
 #include "internal.h"
