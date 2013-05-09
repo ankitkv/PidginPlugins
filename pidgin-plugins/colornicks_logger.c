@@ -204,7 +204,7 @@ static gsize colornicks_logger_write(PurpleLog *log, PurpleMessageFlags type,
 		const char *prpl =
 			PURPLE_PLUGIN_PROTOCOL_INFO(plugin)->list_icon(log->account, NULL);
 		const char *date;
-		purple_log_common_writer(log, ".html");
+		purple_log_common_writer(log, ".htm");
 
 		data = log->logger_data;
 
@@ -315,12 +315,12 @@ static void colornicks_logger_finalize(PurpleLog *log)
 
 static GList *colornicks_logger_list(PurpleLogType type, const char *sn, PurpleAccount *account)
 {
-	return purple_log_common_lister(type, sn, account, ".html", colornicks_logger);
+	return purple_log_common_lister(type, sn, account, ".htm", colornicks_logger);
 }
 
 static GList *colornicks_logger_list_syslog(PurpleAccount *account)
 {
-	return purple_log_common_lister(PURPLE_LOG_SYSTEM, ".system", account, ".html", colornicks_logger);
+	return purple_log_common_lister(PURPLE_LOG_SYSTEM, ".system", account, ".htm", colornicks_logger);
 }
 
 static char *colornicks_logger_read(PurpleLog *log, PurpleLogReadFlags *flags)
@@ -346,7 +346,7 @@ static char *colornicks_logger_read(PurpleLog *log, PurpleLogReadFlags *flags)
 
 static int colornicks_logger_total_size(PurpleLogType type, const char *name, PurpleAccount *account)
 {
-	return purple_log_common_total_sizer(type, name, account, ".html");
+	return purple_log_common_total_sizer(type, name, account, ".htm");
 }
 
 
@@ -376,15 +376,16 @@ plugin_load(PurplePlugin *plugin)
 static gboolean
 plugin_unload(PurplePlugin *plugin)
 {
-	purple_log_logger_remove(colornicks_logger);
-	purple_log_logger_free(colornicks_logger);
 	if (g_strcmp0(purple_prefs_get_string("/purple/logging/format"), "colornicks") == 0) {
 		if (g_strcmp0(old_format, "colornicks") == 0)
 			purple_prefs_set_string("/purple/logging/format", "html");
 		else
 			purple_prefs_set_string("/purple/logging/format", old_format);
 	}
+
 	g_free(old_format);
+	purple_log_logger_remove(colornicks_logger);
+	purple_log_logger_free(colornicks_logger);
 	return TRUE;
 }
 
