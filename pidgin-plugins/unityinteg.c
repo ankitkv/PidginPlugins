@@ -349,7 +349,7 @@ launcher_config_cb(GtkWidget *widget, gpointer data)
 	gint option = GPOINTER_TO_INT(data);
 	g_return_if_fail(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 
-	purple_prefs_set_int("/plugins/gtk/unity/launcher_count", option);
+	purple_prefs_set_int("/plugins/gtk/unityinteg/launcher_count", option);
 	launcher_count = option;
 	if (option == LAUNCHER_COUNT_DISABLE)
 		unity_launcher_entry_set_count_visible(launcher, FALSE);
@@ -363,7 +363,7 @@ messaging_menu_config_cb(GtkWidget *widget, gpointer data)
 	gint option = GPOINTER_TO_INT(data);
 	g_return_if_fail(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 
-	purple_prefs_set_int("/plugins/gtk/unity/messaging_menu_text", option);
+	purple_prefs_set_int("/plugins/gtk/unityinteg/messaging_menu_text", option);
 	messaging_menu_text = option;
 	refill_messaging_menu();
 }
@@ -426,7 +426,7 @@ get_config_frame(PurplePlugin *plugin)
 	toggle = gtk_radio_button_new_with_mnemonic(NULL, _("_Disable launcher integration"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
-		purple_prefs_get_int("/plugins/gtk/unity/launcher_count") == LAUNCHER_COUNT_DISABLE);
+		purple_prefs_get_int("/plugins/gtk/unityinteg/launcher_count") == LAUNCHER_COUNT_DISABLE);
 	g_signal_connect(G_OBJECT(toggle), "toggled",
 	                 G_CALLBACK(launcher_config_cb), GUINT_TO_POINTER(LAUNCHER_COUNT_DISABLE));
 
@@ -434,7 +434,7 @@ get_config_frame(PurplePlugin *plugin)
 	                                                        _("Show number of unread _messages on launcher icon"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
-		purple_prefs_get_int("/plugins/gtk/unity/launcher_count") == LAUNCHER_COUNT_MESSAGES);
+		purple_prefs_get_int("/plugins/gtk/unityinteg/launcher_count") == LAUNCHER_COUNT_MESSAGES);
 	g_signal_connect(G_OBJECT(toggle), "toggled",
 	                 G_CALLBACK(launcher_config_cb), GUINT_TO_POINTER(LAUNCHER_COUNT_MESSAGES));
 
@@ -442,7 +442,7 @@ get_config_frame(PurplePlugin *plugin)
 	                                                        _("Show number of unread _conversations on launcher icon"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
-		purple_prefs_get_int("/plugins/gtk/unity/launcher_count") == LAUNCHER_COUNT_SOURCES);
+		purple_prefs_get_int("/plugins/gtk/unityinteg/launcher_count") == LAUNCHER_COUNT_SOURCES);
 	g_signal_connect(G_OBJECT(toggle), "toggled",
 	                 G_CALLBACK(launcher_config_cb), GUINT_TO_POINTER(LAUNCHER_COUNT_SOURCES));
 
@@ -456,7 +456,7 @@ get_config_frame(PurplePlugin *plugin)
 	                                                        _("Show number of _unread messages for conversations in messaging menu"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
-		purple_prefs_get_int("/plugins/gtk/unity/messaging_menu_text") == MESSAGING_MENU_COUNT);
+		purple_prefs_get_int("/plugins/gtk/unityinteg/messaging_menu_text") == MESSAGING_MENU_COUNT);
 	g_signal_connect(G_OBJECT(toggle), "toggled",
 	                 G_CALLBACK(messaging_menu_config_cb), GUINT_TO_POINTER(MESSAGING_MENU_COUNT));
 
@@ -464,7 +464,7 @@ get_config_frame(PurplePlugin *plugin)
 	                                                        _("Show _elapsed time for unread conversations in messaging menu"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
-		purple_prefs_get_int("/plugins/gtk/unity/messaging_menu_text") == MESSAGING_MENU_TIME);
+		purple_prefs_get_int("/plugins/gtk/unityinteg/messaging_menu_text") == MESSAGING_MENU_TIME);
 	g_signal_connect(G_OBJECT(toggle), "toggled",
 	                 G_CALLBACK(messaging_menu_config_cb), GUINT_TO_POINTER(MESSAGING_MENU_TIME));
 
@@ -482,8 +482,9 @@ plugin_load(PurplePlugin *plugin)
 	void *savedstat_handle = purple_savedstatuses_get_handle();
 
 	mmapp = messaging_menu_app_new("pidgin.desktop");
+	g_object_ref(mmapp);
 	messaging_menu_app_register(mmapp);
-	messaging_menu_text = purple_prefs_get_int("/plugins/gtk/unity/messaging_menu_text");
+	messaging_menu_text = purple_prefs_get_int("/plugins/gtk/unityinteg/messaging_menu_text");
 
 	g_signal_connect(mmapp, "activate-source",
 	                 G_CALLBACK(message_source_activated), NULL);
@@ -497,7 +498,8 @@ plugin_load(PurplePlugin *plugin)
 	                    PURPLE_CALLBACK(status_changed_cb), NULL);
 
 	launcher = unity_launcher_entry_get_for_desktop_id("pidgin.desktop");
-	launcher_count = purple_prefs_get_int("/plugins/gtk/unity/launcher_count");
+	g_object_ref(launcher);
+	launcher_count = purple_prefs_get_int("/plugins/gtk/unityinteg/launcher_count");
 
 	purple_signal_connect(gtk_conv_handle, "displayed-im-msg", plugin,
 	                    PURPLE_CALLBACK(message_displayed_cb), NULL);
@@ -531,9 +533,11 @@ plugin_unload(PurplePlugin *plugin)
 		detach_signals(conv);
 		convs = convs->next;
 	}
-
+	
 	unity_launcher_entry_set_count_visible(launcher, FALSE);
 	messaging_menu_app_unregister(mmapp);
+
+	g_object_unref(launcher);
 	g_object_unref(mmapp);
 	return TRUE;
 }
@@ -561,7 +565,7 @@ static PurplePluginInfo info =
 	NULL,                                             /**< dependencies   */
 	PURPLE_PRIORITY_DEFAULT,                          /**< priority       */
 
-	"ankitkv-unityinteg",                             /**< id             */
+	"gtk-ankitkv-unityinteg",                         /**< id             */
 	"Unity Integration",                              /**< name           */
 	"0.1",                                            /**< version        */
 	                                                  /**  summary        */
@@ -593,9 +597,9 @@ static void
 init_plugin(PurplePlugin *plugin)
 {
 	purple_prefs_add_none("/plugins/gtk");
-	purple_prefs_add_none("/plugins/gtk/unity");
-	purple_prefs_add_int("/plugins/gtk/unity/launcher_count", LAUNCHER_COUNT_SOURCES);
-	purple_prefs_add_int("/plugins/gtk/unity/messaging_menu_text", MESSAGING_MENU_COUNT);
+	purple_prefs_add_none("/plugins/gtk/unityinteg");
+	purple_prefs_add_int("/plugins/gtk/unityinteg/launcher_count", LAUNCHER_COUNT_SOURCES);
+	purple_prefs_add_int("/plugins/gtk/unityinteg/messaging_menu_text", MESSAGING_MENU_COUNT);
 }
 
 PURPLE_INIT_PLUGIN(unityinteg, init_plugin, info)

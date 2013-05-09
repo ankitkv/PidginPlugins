@@ -352,6 +352,7 @@ static int colornicks_logger_total_size(PurpleLogType type, const char *name, Pu
 static gboolean
 plugin_load(PurplePlugin *plugin)
 {
+// TODO: backup old format and reapply it
 //	purple_prefs_set_string("/purple/logging/format", "colornicks");
 
 	colornicks_logger = purple_log_logger_new("colornicks", "Colored nicks", 11,
@@ -390,7 +391,7 @@ static PurplePluginInfo info =
 	NULL,                                             /**< dependencies   */
 	PURPLE_PRIORITY_DEFAULT,                          /**< priority       */
 
-	"ankitkv-colornicks_logger",                      /**< id             */
+	"gtk-ankitkv-colornicks_logger",                  /**< id             */
 	"ColorNicks Logger",                              /**< name           */
 	"0.1",                                            /**< version        */
 	                                                  /**  summary        */
