@@ -41,11 +41,13 @@ static UnityLauncherEntry *launcher = NULL;
 static guint n_sources = 0;
 
 enum {
+	LAUNCHER_COUNT_DISABLE,
 	LAUNCHER_COUNT_MESSAGES,
 	LAUNCHER_COUNT_SOURCES,
 };
 
 enum {
+	MESSAGING_MENU_DISABLE,
 	MESSAGING_MENU_TITLE,
 	MESSAGING_MENU_COUNT,
 	MESSAGING_MENU_TIME,
@@ -332,6 +334,30 @@ messaging_menu_status_changed(MessagingMenuApp *mmapp,
 	purple_savedstatus_activate(saved_status);
 }
 
+static void
+launcher_config_cb(GtkWidget *widget, gpointer data)
+{
+	gint option = GPOINTER_TO_INT(data);
+	if (option == LAUNCHER_COUNT_DISABLE) {
+		purple_prefs_set_bool("/plugins/gtk/unity/enable_launcher", FALSE);
+	} else {
+		purple_prefs_set_bool("/plugins/gtk/unity/enable_launcher", TRUE);
+		purple_prefs_set_int("/plugins/gtk/unity/launcher_count", option);
+	}
+}
+
+static void
+messaging_menu_config_cb(GtkWidget *widget, gpointer data)
+{
+	gint option = GPOINTER_TO_INT(data);
+	if (option == MESSAGING_MENU_DISABLE) {
+		purple_prefs_set_bool("/plugins/gtk/unity/enable_messaging_menu", FALSE);
+	} else {
+		purple_prefs_set_bool("/plugins/gtk/unity/enable_messaging_menu", TRUE);
+		purple_prefs_set_int("/plugins/gtk/unity/messaging_menu_text", option);
+	}
+}
+
 static int
 attach_signals(PurpleConversation *conv)
 {
@@ -416,18 +442,24 @@ get_config_frame(PurplePlugin *plugin)
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		!purple_prefs_get_bool("/plugins/gtk/unity/enable_launcher"));
+	g_signal_connect(G_OBJECT(toggle), "clicked",
+	                 G_CALLBACK(launcher_config_cb), GUINT_TO_POINTER(LAUNCHER_COUNT_DISABLE));
 
 	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
 	                                                        _("Show unread _message count on launcher icon"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		purple_prefs_get_int("/plugins/gtk/unity/launcher_count") == LAUNCHER_COUNT_MESSAGES);
+	g_signal_connect(G_OBJECT(toggle), "clicked",
+	                 G_CALLBACK(launcher_config_cb), GUINT_TO_POINTER(LAUNCHER_COUNT_MESSAGES));
 
 	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
 	                                                        _("Show unread _sources count on launcher icon"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		purple_prefs_get_int("/plugins/gtk/unity/launcher_count") == LAUNCHER_COUNT_SOURCES);
+	g_signal_connect(G_OBJECT(toggle), "clicked",
+	                 G_CALLBACK(launcher_config_cb), GUINT_TO_POINTER(LAUNCHER_COUNT_SOURCES));
 
 	/* Messaging menu integration */
 
@@ -439,24 +471,32 @@ get_config_frame(PurplePlugin *plugin)
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		!purple_prefs_get_bool("/plugins/gtk/unity/enable_messaging_menu"));
+	g_signal_connect(G_OBJECT(toggle), "clicked",
+	                 G_CALLBACK(messaging_menu_config_cb), GUINT_TO_POINTER(MESSAGING_MENU_DISABLE));
 
 	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
 	                                                        _("_Only show conversation title in messaging menu"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		purple_prefs_get_int("/plugins/gtk/unity/messaging_menu_text") == MESSAGING_MENU_TITLE);
+	g_signal_connect(G_OBJECT(toggle), "clicked",
+	                 G_CALLBACK(messaging_menu_config_cb), GUINT_TO_POINTER(MESSAGING_MENU_TITLE));
 
 	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
 	                                                        _("Show _unread message count for conversations in messaging menu"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		purple_prefs_get_int("/plugins/gtk/unity/messaging_menu_text") == MESSAGING_MENU_COUNT);
+	g_signal_connect(G_OBJECT(toggle), "clicked",
+	                 G_CALLBACK(messaging_menu_config_cb), GUINT_TO_POINTER(MESSAGING_MENU_COUNT));
 
 	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
 	                                                        _("Show _elapsed time for unread conversations in messaging menu"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		purple_prefs_get_int("/plugins/gtk/unity/messaging_menu_text") == MESSAGING_MENU_TIME);
+	g_signal_connect(G_OBJECT(toggle), "clicked",
+	                 G_CALLBACK(messaging_menu_config_cb), GUINT_TO_POINTER(MESSAGING_MENU_TIME));
 
 	gtk_widget_show_all(ret);
 	return ret;
