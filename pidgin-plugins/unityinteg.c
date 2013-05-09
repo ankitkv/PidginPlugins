@@ -95,7 +95,7 @@ conversation_id(PurpleConversation *conv)
 }
 
 static void
-messaging_menu_add_source(PurpleConversation *conv, gint count)
+messaging_menu_add_conversation(PurpleConversation *conv, gint count)
 {
 	gchar *id = conversation_id(conv);
 
@@ -116,7 +116,7 @@ messaging_menu_add_source(PurpleConversation *conv, gint count)
 }
 
 static void
-messaging_menu_remove_source(PurpleConversation *conv)
+messaging_menu_remove_conversation(PurpleConversation *conv)
 {
 	gchar *id = conversation_id(conv);
 	if (messaging_menu_app_has_source(mmapp, id)) {
@@ -133,7 +133,7 @@ refill_messaging_menu()
 
 	for (convs = purple_get_conversations(); convs != NULL; convs = convs->next) {
 		PurpleConversation *conv = convs->data;
-		messaging_menu_add_source(conv,
+		messaging_menu_add_conversation(conv,
 			GPOINTER_TO_INT(purple_conversation_get_data(conv, "unityinteg-message-count")));
 	}
 }
@@ -156,8 +156,8 @@ alert(PurpleConversation *conv)
 		count++;
 		purple_conversation_set_data(conv, "unityinteg-message-count",
 		                             GINT_TO_POINTER(count));
+		messaging_menu_add_conversation(conv, count);
 		update_launcher();
-		messaging_menu_add_source(conv, count);
 	}
 
 	return 0;
@@ -168,8 +168,8 @@ unalert(PurpleConversation *conv)
 {
 	purple_conversation_set_data(conv, "unityinteg-message-count",
 	                             GINT_TO_POINTER(0));
+	messaging_menu_remove_conversation(conv);
 	update_launcher();
-	messaging_menu_remove_source(conv);
 }
 
 static int
@@ -370,7 +370,6 @@ static int
 attach_signals(PurpleConversation *conv)
 {
 	PidginConversation *gtkconv = NULL;
-	GSList *webview_ids = NULL, *entry_ids = NULL;
 	guint id;
 
 	gtkconv = PIDGIN_CONVERSATION(conv);
@@ -379,26 +378,11 @@ attach_signals(PurpleConversation *conv)
 
 	id = g_signal_connect(G_OBJECT(gtkconv->entry), "focus-in-event",
 	                      G_CALLBACK(unalert_cb), conv);
-	entry_ids = g_slist_append(entry_ids, GUINT_TO_POINTER(id));
+	purple_conversation_set_data(conv, "unityinteg-webview-signal", GUINT_TO_POINTER(id));
 
 	id = g_signal_connect(G_OBJECT(gtkconv->webview), "focus-in-event",
 	                      G_CALLBACK(unalert_cb), conv);
-	webview_ids = g_slist_append(webview_ids, GUINT_TO_POINTER(id));
-
-	id = g_signal_connect(G_OBJECT(gtkconv->entry), "button-press-event",
-	                      G_CALLBACK(unalert_cb), conv);
-	entry_ids = g_slist_append(entry_ids, GUINT_TO_POINTER(id));
-
-	id = g_signal_connect(G_OBJECT(gtkconv->webview), "button-press-event",
-	                      G_CALLBACK(unalert_cb), conv);
-	webview_ids = g_slist_append(webview_ids, GUINT_TO_POINTER(id));
-
-	id = g_signal_connect(G_OBJECT(gtkconv->entry), "key-press-event",
-	                      G_CALLBACK(unalert_cb), conv);
-	entry_ids = g_slist_append(entry_ids, GUINT_TO_POINTER(id));
-
-	purple_conversation_set_data(conv, "unityinteg-webview-signals", webview_ids);
-	purple_conversation_set_data(conv, "unityinteg-entry-signals", entry_ids);
+	purple_conversation_set_data(conv, "unityinteg-entry-signal", GUINT_TO_POINTER(id));
 
 	return 0;
 }
@@ -407,26 +391,19 @@ static void
 detach_signals(PurpleConversation *conv)
 {
 	PidginConversation *gtkconv = NULL;
-	GSList *ids = NULL, *l;
+	guint id;
 	gtkconv = PIDGIN_CONVERSATION(conv);
 	if (!gtkconv)
 		return;
 
-	ids = purple_conversation_get_data(conv, "unityinteg-webview-signals");
-	for (l = ids; l != NULL; l = l->next)
-		g_signal_handler_disconnect(gtkconv->webview, GPOINTER_TO_INT(l->data));
-	g_slist_free(ids);
+	id = GPOINTER_TO_INT(purple_conversation_get_data(conv, "unityinteg-webview-signal"));
+	g_signal_handler_disconnect(gtkconv->webview, id);
 
-	ids = purple_conversation_get_data(conv, "unityinteg-entry-signals");
-	for (l = ids; l != NULL; l = l->next)
-		g_signal_handler_disconnect(gtkconv->entry, GPOINTER_TO_INT(l->data));
-	g_slist_free(ids);
+	id = GPOINTER_TO_INT(purple_conversation_get_data(conv, "unityinteg-entry-signal"));
+	g_signal_handler_disconnect(gtkconv->entry, id);
 
 	purple_conversation_set_data(conv, "unityinteg-message-count",
 	                             GINT_TO_POINTER(0));
-
-	purple_conversation_set_data(conv, "unityinteg-webview-signals", NULL);
-	purple_conversation_set_data(conv, "unityinteg-entry-signals", NULL);
 }
 
 static GtkWidget *
