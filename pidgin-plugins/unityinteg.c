@@ -57,12 +57,12 @@ static int attach_signals(PurpleConversation *conv);
 static void detach_signals(PurpleConversation *conv);
 
 static void
-update_launcher(PidginWindow *purplewin)
+update_launcher()
 {
 	guint count = 0;
 	GList *convs = NULL, *l;
 
-	for (convs = purplewin->gtkconvs; convs != NULL; convs = convs->next) {
+	for (convs = purple_get_conversations(); convs != NULL; convs = convs->next) {
 		PidginConversation *conv = convs->data;
 		for (l = conv->convs; l != NULL; l = l->next) {
 			count += GPOINTER_TO_INT(purple_conversation_get_data(l->data,
@@ -146,7 +146,7 @@ notify(PurpleConversation *conv)
 		time = g_get_real_time();
 		purple_conversation_set_data(conv, "unity-message-time",
 		                             GINT_TO_POINTER(time));
-		update_launcher(purplewin);
+		update_launcher();
 		messaging_menu_add_source(conv, count, time);
 	}
 
@@ -159,7 +159,7 @@ unnotify(PurpleConversation *conv)
 	PidginWindow *purplewin = PIDGIN_CONVERSATION(conv)->win;
 	purple_conversation_set_data(conv, "unity-message-count",
 	                             GINT_TO_POINTER(0));
-	update_launcher(purplewin);
+	update_launcher();
 	messaging_menu_remove_source(conv);
 }
 
