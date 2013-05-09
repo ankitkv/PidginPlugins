@@ -338,6 +338,8 @@ static void
 launcher_config_cb(GtkWidget *widget, gpointer data)
 {
 	gint option = GPOINTER_TO_INT(data);
+	g_return_if_fail(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
+
 	if (option == LAUNCHER_COUNT_DISABLE) {
 		purple_prefs_set_bool("/plugins/gtk/unity/enable_launcher", FALSE);
 	} else {
@@ -350,6 +352,8 @@ static void
 messaging_menu_config_cb(GtkWidget *widget, gpointer data)
 {
 	gint option = GPOINTER_TO_INT(data);
+	g_return_if_fail(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
+
 	if (option == MESSAGING_MENU_DISABLE) {
 		purple_prefs_set_bool("/plugins/gtk/unity/enable_messaging_menu", FALSE);
 	} else {
@@ -442,7 +446,7 @@ get_config_frame(PurplePlugin *plugin)
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		!purple_prefs_get_bool("/plugins/gtk/unity/enable_launcher"));
-	g_signal_connect(G_OBJECT(toggle), "clicked",
+	g_signal_connect(G_OBJECT(toggle), "toggled",
 	                 G_CALLBACK(launcher_config_cb), GUINT_TO_POINTER(LAUNCHER_COUNT_DISABLE));
 
 	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
@@ -450,7 +454,7 @@ get_config_frame(PurplePlugin *plugin)
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		purple_prefs_get_int("/plugins/gtk/unity/launcher_count") == LAUNCHER_COUNT_MESSAGES);
-	g_signal_connect(G_OBJECT(toggle), "clicked",
+	g_signal_connect(G_OBJECT(toggle), "toggled",
 	                 G_CALLBACK(launcher_config_cb), GUINT_TO_POINTER(LAUNCHER_COUNT_MESSAGES));
 
 	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
@@ -458,7 +462,7 @@ get_config_frame(PurplePlugin *plugin)
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		purple_prefs_get_int("/plugins/gtk/unity/launcher_count") == LAUNCHER_COUNT_SOURCES);
-	g_signal_connect(G_OBJECT(toggle), "clicked",
+	g_signal_connect(G_OBJECT(toggle), "toggled",
 	                 G_CALLBACK(launcher_config_cb), GUINT_TO_POINTER(LAUNCHER_COUNT_SOURCES));
 
 	/* Messaging menu integration */
@@ -471,7 +475,7 @@ get_config_frame(PurplePlugin *plugin)
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		!purple_prefs_get_bool("/plugins/gtk/unity/enable_messaging_menu"));
-	g_signal_connect(G_OBJECT(toggle), "clicked",
+	g_signal_connect(G_OBJECT(toggle), "toggled",
 	                 G_CALLBACK(messaging_menu_config_cb), GUINT_TO_POINTER(MESSAGING_MENU_DISABLE));
 
 	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
@@ -479,7 +483,7 @@ get_config_frame(PurplePlugin *plugin)
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		purple_prefs_get_int("/plugins/gtk/unity/messaging_menu_text") == MESSAGING_MENU_TITLE);
-	g_signal_connect(G_OBJECT(toggle), "clicked",
+	g_signal_connect(G_OBJECT(toggle), "toggled",
 	                 G_CALLBACK(messaging_menu_config_cb), GUINT_TO_POINTER(MESSAGING_MENU_TITLE));
 
 	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
@@ -487,7 +491,7 @@ get_config_frame(PurplePlugin *plugin)
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		purple_prefs_get_int("/plugins/gtk/unity/messaging_menu_text") == MESSAGING_MENU_COUNT);
-	g_signal_connect(G_OBJECT(toggle), "clicked",
+	g_signal_connect(G_OBJECT(toggle), "toggled",
 	                 G_CALLBACK(messaging_menu_config_cb), GUINT_TO_POINTER(MESSAGING_MENU_COUNT));
 
 	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
@@ -495,7 +499,7 @@ get_config_frame(PurplePlugin *plugin)
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		purple_prefs_get_int("/plugins/gtk/unity/messaging_menu_text") == MESSAGING_MENU_TIME);
-	g_signal_connect(G_OBJECT(toggle), "clicked",
+	g_signal_connect(G_OBJECT(toggle), "toggled",
 	                 G_CALLBACK(messaging_menu_config_cb), GUINT_TO_POINTER(MESSAGING_MENU_TIME));
 
 	gtk_widget_show_all(ret);
