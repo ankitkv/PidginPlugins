@@ -65,7 +65,7 @@ update_launcher()
 		for (convs = purple_get_conversations(); convs != NULL; convs = convs->next) {
 			PurpleConversation *conv = convs->data;
 			count += GPOINTER_TO_INT(purple_conversation_get_data(conv,
-			                         "unity-message-count"));
+			                         "unityinteg-message-count"));
 		}
 	} else {
 		count = n_sources;
@@ -134,7 +134,7 @@ refill_messaging_menu()
 	for (convs = purple_get_conversations(); convs != NULL; convs = convs->next) {
 		PurpleConversation *conv = convs->data;
 		messaging_menu_add_source(conv,
-			GPOINTER_TO_INT(purple_conversation_get_data(conv, "unity-message-count")));
+			GPOINTER_TO_INT(purple_conversation_get_data(conv, "unityinteg-message-count")));
 	}
 }
 
@@ -152,9 +152,9 @@ alert(PurpleConversation *conv)
 		!pidgin_conv_window_is_active_conversation(conv))
 	{
 		count = GPOINTER_TO_INT(purple_conversation_get_data(conv,
-		                        "unity-message-count"));
+		                        "unityinteg-message-count"));
 		count++;
-		purple_conversation_set_data(conv, "unity-message-count",
+		purple_conversation_set_data(conv, "unityinteg-message-count",
 		                             GINT_TO_POINTER(count));
 		update_launcher();
 		messaging_menu_add_source(conv, count);
@@ -166,7 +166,7 @@ alert(PurpleConversation *conv)
 static void
 unalert(PurpleConversation *conv)
 {
-	purple_conversation_set_data(conv, "unity-message-count",
+	purple_conversation_set_data(conv, "unityinteg-message-count",
 	                             GINT_TO_POINTER(0));
 	update_launcher();
 	messaging_menu_remove_source(conv);
@@ -209,7 +209,7 @@ chat_sent_im(PurpleAccount *account, const char *message, int id)
 static void
 conv_created(PurpleConversation *conv)
 {
-	purple_conversation_set_data(conv, "unity-message-count",
+	purple_conversation_set_data(conv, "unityinteg-message-count",
 	                             GINT_TO_POINTER(0));
 	attach_signals(conv);
 }
@@ -397,8 +397,8 @@ attach_signals(PurpleConversation *conv)
 	                      G_CALLBACK(unalert_cb), conv);
 	entry_ids = g_slist_append(entry_ids, GUINT_TO_POINTER(id));
 
-	purple_conversation_set_data(conv, "unity-webview-signals", webview_ids);
-	purple_conversation_set_data(conv, "unity-entry-signals", entry_ids);
+	purple_conversation_set_data(conv, "unityinteg-webview-signals", webview_ids);
+	purple_conversation_set_data(conv, "unityinteg-entry-signals", entry_ids);
 
 	return 0;
 }
@@ -412,21 +412,21 @@ detach_signals(PurpleConversation *conv)
 	if (!gtkconv)
 		return;
 
-	ids = purple_conversation_get_data(conv, "unity-webview-signals");
+	ids = purple_conversation_get_data(conv, "unityinteg-webview-signals");
 	for (l = ids; l != NULL; l = l->next)
 		g_signal_handler_disconnect(gtkconv->webview, GPOINTER_TO_INT(l->data));
 	g_slist_free(ids);
 
-	ids = purple_conversation_get_data(conv, "unity-entry-signals");
+	ids = purple_conversation_get_data(conv, "unityinteg-entry-signals");
 	for (l = ids; l != NULL; l = l->next)
 		g_signal_handler_disconnect(gtkconv->entry, GPOINTER_TO_INT(l->data));
 	g_slist_free(ids);
 
-	purple_conversation_set_data(conv, "unity-message-count",
+	purple_conversation_set_data(conv, "unityinteg-message-count",
 	                             GINT_TO_POINTER(0));
 
-	purple_conversation_set_data(conv, "unity-webview-signals", NULL);
-	purple_conversation_set_data(conv, "unity-entry-signals", NULL);
+	purple_conversation_set_data(conv, "unityinteg-webview-signals", NULL);
+	purple_conversation_set_data(conv, "unityinteg-entry-signals", NULL);
 }
 
 static GtkWidget *
