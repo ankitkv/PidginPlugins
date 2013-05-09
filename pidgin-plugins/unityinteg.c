@@ -22,6 +22,10 @@
  * Ensure pidgin.desktop has X-MessagingMenu-UsesChatSection=true
  */
 
+// bugs:
+// - launcher icon count missing
+// - mm time wrong
+
 #include "internal.h"
 #include "debug.h"
 #include "version.h"
@@ -39,9 +43,8 @@
 static MessagingMenuApp *mmapp = NULL;
 static UnityLauncherEntry *launcher = NULL;
 static guint n_sources = 0;
-static gboolean launcher_disabled = FALSE;
 static gint launcher_count;
-static gboolean messaging_menu_disabled = FALSE;
+static gint messaging_menu_text;
 
 enum {
 	LAUNCHER_COUNT_DISABLE,
@@ -50,8 +53,6 @@ enum {
 };
 
 enum {
-	MESSAGING_MENU_DISABLE,
-	MESSAGING_MENU_TITLE,
 	MESSAGING_MENU_COUNT,
 	MESSAGING_MENU_TIME,
 };
@@ -63,16 +64,14 @@ static void
 update_launcher()
 {
 	guint count = 0;
-	GList *convs = NULL, *l;
-	g_return_if_fail(launcher != NULL && !launcher_disabled);
+	GList *convs = NULL;
+	g_return_if_fail(launcher != NULL && launcher_count != LAUNCHER_COUNT_DISABLE);
 
 	if (launcher_count == LAUNCHER_COUNT_MESSAGES) {
 		for (convs = purple_get_conversations(); convs != NULL; convs = convs->next) {
-			PidginConversation *conv = convs->data;
-			for (l = conv->convs; l != NULL; l = l->next) {
-				count += GPOINTER_TO_INT(purple_conversation_get_data(l->data,
-				                         "unity-message-count"));
-			}
+			PurpleConversation *conv = convs->data;
+			count += GPOINTER_TO_INT(purple_conversation_get_data(conv,
+			                         "unity-message-count"));
 		}
 	} else {
 		count = n_sources;
@@ -85,11 +84,6 @@ update_launcher()
 			unity_launcher_entry_set_count_visible(launcher, FALSE);
 		unity_launcher_entry_set_count(launcher, count);
 	}
-}
-
-static void
-refresh_messaging_menu()
-{
 }
 
 static gchar *
@@ -118,8 +112,10 @@ messaging_menu_add_source(PurpleConversation *conv, gint count, gint time)
 		                                 purple_conversation_get_title(conv));
 		++n_sources;
 	}
-	messaging_menu_app_set_source_time(mmapp, id, time);
-	messaging_menu_app_set_source_count(mmapp, id, count);
+	if (messaging_menu_text == MESSAGING_MENU_TIME)
+		messaging_menu_app_set_source_time(mmapp, id, time);
+	else if (messaging_menu_text == MESSAGING_MENU_COUNT)
+		messaging_menu_app_set_source_count(mmapp, id, count);
 	messaging_menu_app_draw_attention(mmapp, id);
 
 	g_free(id);
@@ -134,6 +130,19 @@ messaging_menu_remove_source(PurpleConversation *conv)
 		--n_sources;
 	}
 	g_free(id);
+}
+
+static void
+refill_messaging_menu()
+{
+	GList *convs;
+
+	for (convs = purple_get_conversations(); convs != NULL; convs = convs->next) {
+		PurpleConversation *conv = convs->data;
+		messaging_menu_add_source(conv,
+			GPOINTER_TO_INT(purple_conversation_get_data(conv, "unity-message-count")),
+			GPOINTER_TO_INT(purple_conversation_get_data(conv, "unity-message-time")));
+	}
 }
 
 static int
@@ -350,17 +359,12 @@ launcher_config_cb(GtkWidget *widget, gpointer data)
 	gint option = GPOINTER_TO_INT(data);
 	g_return_if_fail(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 
-	if (option == LAUNCHER_COUNT_DISABLE) {
-		purple_prefs_set_bool("/plugins/gtk/unity/enable_launcher", FALSE);
+	purple_prefs_set_int("/plugins/gtk/unity/launcher_count", option);
+	launcher_count = option;
+	if (option == LAUNCHER_COUNT_DISABLE)
 		unity_launcher_entry_set_count_visible(launcher, FALSE);
-		launcher_disabled = TRUE;
-	} else {
-		purple_prefs_set_bool("/plugins/gtk/unity/enable_launcher", TRUE);
-		purple_prefs_set_int("/plugins/gtk/unity/launcher_count", option);
-		launcher_count = option;
-		launcher_disabled = FALSE;
+	else
 		update_launcher();
-	}
 }
 
 static void
@@ -369,14 +373,9 @@ messaging_menu_config_cb(GtkWidget *widget, gpointer data)
 	gint option = GPOINTER_TO_INT(data);
 	g_return_if_fail(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 
-	if (option == MESSAGING_MENU_DISABLE) {
-		purple_prefs_set_bool("/plugins/gtk/unity/enable_messaging_menu", FALSE);
-	} else {
-		purple_prefs_set_bool("/plugins/gtk/unity/enable_messaging_menu", TRUE);
-		purple_prefs_set_int("/plugins/gtk/unity/messaging_menu_text", option);
-	}
-
-	refresh_messaging_menu();
+	purple_prefs_set_int("/plugins/gtk/unity/messaging_menu_text", option);
+	messaging_menu_text = option;
+	refill_messaging_menu();
 }
 
 static int
@@ -455,19 +454,19 @@ get_config_frame(PurplePlugin *plugin)
 
 	/* Launcher integration */
 
-	frame = pidgin_make_frame(ret, _("Launcher"));
+	frame = pidgin_make_frame(ret, _("Launcher Icon"));
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 	gtk_container_add(GTK_CONTAINER(frame), vbox);
 
 	toggle = gtk_radio_button_new_with_mnemonic(NULL, _("_Disable launcher integration"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
-		!purple_prefs_get_bool("/plugins/gtk/unity/enable_launcher"));
+		purple_prefs_get_int("/plugins/gtk/unity/launcher_count") == LAUNCHER_COUNT_DISABLE);
 	g_signal_connect(G_OBJECT(toggle), "toggled",
 	                 G_CALLBACK(launcher_config_cb), GUINT_TO_POINTER(LAUNCHER_COUNT_DISABLE));
 
 	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
-	                                                        _("Show unread _message count on launcher icon"));
+	                                                        _("Show number of unread _messages on launcher icon"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		purple_prefs_get_int("/plugins/gtk/unity/launcher_count") == LAUNCHER_COUNT_MESSAGES);
@@ -475,7 +474,7 @@ get_config_frame(PurplePlugin *plugin)
 	                 G_CALLBACK(launcher_config_cb), GUINT_TO_POINTER(LAUNCHER_COUNT_MESSAGES));
 
 	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
-	                                                        _("Show unread _sources count on launcher icon"));
+	                                                        _("Show number of unread _conversations on launcher icon"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		purple_prefs_get_int("/plugins/gtk/unity/launcher_count") == LAUNCHER_COUNT_SOURCES);
@@ -488,23 +487,8 @@ get_config_frame(PurplePlugin *plugin)
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 	gtk_container_add(GTK_CONTAINER(frame), vbox);
 
-	toggle = gtk_radio_button_new_with_mnemonic(NULL, _("Disable messaging menu _integration"));
-	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
-		!purple_prefs_get_bool("/plugins/gtk/unity/enable_messaging_menu"));
-	g_signal_connect(G_OBJECT(toggle), "toggled",
-	                 G_CALLBACK(messaging_menu_config_cb), GUINT_TO_POINTER(MESSAGING_MENU_DISABLE));
-
-	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
-	                                                        _("_Only show conversation title in messaging menu"));
-	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
-		purple_prefs_get_int("/plugins/gtk/unity/messaging_menu_text") == MESSAGING_MENU_TITLE);
-	g_signal_connect(G_OBJECT(toggle), "toggled",
-	                 G_CALLBACK(messaging_menu_config_cb), GUINT_TO_POINTER(MESSAGING_MENU_TITLE));
-
-	toggle = gtk_radio_button_new_with_mnemonic_from_widget(GTK_RADIO_BUTTON(toggle),
-	                                                        _("Show _unread message count for conversations in messaging menu"));
+	toggle = gtk_radio_button_new_with_mnemonic(NULL,
+	                                                        _("Show number of _unread messages for conversations in messaging menu"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 		purple_prefs_get_int("/plugins/gtk/unity/messaging_menu_text") == MESSAGING_MENU_COUNT);
@@ -534,6 +518,7 @@ plugin_load(PurplePlugin *plugin)
 
 	mmapp = messaging_menu_app_new("pidgin.desktop");
 	messaging_menu_app_register(mmapp);
+	messaging_menu_text = purple_prefs_get_int("/plugins/gtk/unity/messaging_menu_text");
 
 	g_signal_connect(mmapp, "activate-source",
 	                 G_CALLBACK(message_source_activated), NULL);
@@ -547,8 +532,6 @@ plugin_load(PurplePlugin *plugin)
 	                    PURPLE_CALLBACK(status_changed_cb), NULL);
 
 	launcher = unity_launcher_entry_get_for_desktop_id("pidgin.desktop");
-	if (purple_prefs_get_bool("/plugins/gtk/unity/enable_launcher") == FALSE)
-		launcher_disabled = TRUE;
 	launcher_count = purple_prefs_get_int("/plugins/gtk/unity/launcher_count");
 
 	purple_signal_connect(gtk_conv_handle, "displayed-im-msg", plugin,
@@ -579,10 +562,12 @@ plugin_unload(PurplePlugin *plugin)
 	GList *convs = purple_get_conversations();
 	while (convs) {
 		PurpleConversation *conv = (PurpleConversation *)convs->data;
+		unnotify(conv);
 		detach_signals(conv);
 		convs = convs->next;
 	}
 
+	unity_launcher_entry_set_count_visible(launcher, FALSE);
 	messaging_menu_app_unregister(mmapp);
 	g_object_unref(mmapp);
 	return TRUE;
@@ -644,10 +629,7 @@ init_plugin(PurplePlugin *plugin)
 {
 	purple_prefs_add_none("/plugins/gtk");
 	purple_prefs_add_none("/plugins/gtk/unity");
-
-	purple_prefs_add_bool("/plugins/gtk/unity/enable_launcher", TRUE);
 	purple_prefs_add_int("/plugins/gtk/unity/launcher_count", LAUNCHER_COUNT_SOURCES);
-	purple_prefs_add_bool("/plugins/gtk/unity/enable_messaging_menu", TRUE);
 	purple_prefs_add_int("/plugins/gtk/unity/messaging_menu_text", MESSAGING_MENU_COUNT);
 }
 
