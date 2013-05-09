@@ -20,6 +20,7 @@
 
 /* NOTE:
  * Ensure pidgin.desktop has X-MessagingMenu-UsesChatSection=true
+ * to use the chat status icons of the messaging menu
  */
 
 #include "internal.h"
