@@ -100,8 +100,9 @@ conversation_id(PurpleConversation *conv)
 static void
 messaging_menu_add_conversation(PurpleConversation *conv, gint count)
 {
-	gchar *id = conversation_id(conv);
+	gchar *id;
 	g_return_if_fail(count > 0);
+	id = conversation_id(conv);
 
 	/* GBytesIcon may be useful for messaging menu source icons using buddy
 	   icon data for IMs */
