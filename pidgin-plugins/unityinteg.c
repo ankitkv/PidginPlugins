@@ -397,9 +397,9 @@ attach_signals(PurpleConversation *conv)
 	                      G_CALLBACK(unalert_cb), conv);
 	purple_conversation_set_data(conv, "unityinteg-entry-signal", GUINT_TO_POINTER(id));
 
-	id = g_signal_connect(G_OBJECT(gtkconv->webview), "focus-in-event",
+	id = g_signal_connect(G_OBJECT(gtkconv->imhtml), "focus-in-event",
 	                      G_CALLBACK(unalert_cb), conv);
-	purple_conversation_set_data(conv, "unityinteg-webview-signal", GUINT_TO_POINTER(id));
+	purple_conversation_set_data(conv, "unityinteg-imhtml-signal", GUINT_TO_POINTER(id));
 
 	return 0;
 }
@@ -413,8 +413,8 @@ detach_signals(PurpleConversation *conv)
 	if (!gtkconv)
 		return;
 
-	id = GPOINTER_TO_INT(purple_conversation_get_data(conv, "unityinteg-webview-signal"));
-	g_signal_handler_disconnect(gtkconv->webview, id);
+	id = GPOINTER_TO_INT(purple_conversation_get_data(conv, "unityinteg-imhtml-signal"));
+	g_signal_handler_disconnect(gtkconv->imhtml, id);
 
 	id = GPOINTER_TO_INT(purple_conversation_get_data(conv, "unityinteg-entry-signal"));
 	g_signal_handler_disconnect(gtkconv->entry, id);
@@ -429,13 +429,13 @@ get_config_frame(PurplePlugin *plugin)
 	GtkWidget *ret = NULL, *frame = NULL;
 	GtkWidget *vbox = NULL, *toggle = NULL;
 
-	ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 18);
+	ret = gtk_vbox_new(FALSE, 18);
 	gtk_container_set_border_width(GTK_CONTAINER (ret), 12);
 
 	/* Alerts */
 
 	frame = pidgin_make_frame(ret, _("Chatroom alerts"));
-	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+	vbox = gtk_vbox_new(FALSE, 5);
 	gtk_container_add(GTK_CONTAINER(frame), vbox);
 
 	toggle = gtk_check_button_new_with_mnemonic(_("Chatroom message alerts _only where someone says your username"));
@@ -448,7 +448,7 @@ get_config_frame(PurplePlugin *plugin)
 	/* Launcher integration */
 
 	frame = pidgin_make_frame(ret, _("Launcher Icon"));
-	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+	vbox = gtk_vbox_new(FALSE, 5);
 	gtk_container_add(GTK_CONTAINER(frame), vbox);
 
 	toggle = gtk_radio_button_new_with_mnemonic(NULL, _("_Disable launcher integration"));
@@ -477,7 +477,7 @@ get_config_frame(PurplePlugin *plugin)
 	/* Messaging menu integration */
 
 	frame = pidgin_make_frame(ret, _("Messaging Menu"));
-	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+	vbox = gtk_vbox_new(FALSE, 5);
 	gtk_container_add(GTK_CONTAINER(frame), vbox);
 
 	toggle = gtk_radio_button_new_with_mnemonic(NULL,
