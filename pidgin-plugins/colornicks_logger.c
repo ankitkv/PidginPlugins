@@ -18,6 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02111-1301, USA.
  */
 
+/* Known issue:
+ * If the plugin is unloaded, all open conversations that have logger set as
+ * colornicks_logger will cause pidgin to crash as it tries to finalize the
+ * logs of those conversations via a now-extinct logger.
+ *
+ * Temporary workaround:
+ * Close all conversations before unloading the plugin.
+ */
+
 #include "internal.h"
 #include "debug.h"
 #include "gtkplugin.h"
