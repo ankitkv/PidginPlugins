@@ -18,15 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02111-1301, USA.
  */
 
-/* Known issue:
- * If the plugin is unloaded, all open conversations that have logger set as
- * colornicks_logger will cause pidgin to crash as it tries to finalize the
- * logs of those conversations via a now-extinct logger.
- *
- * Temporary workaround:
- * Close all conversations before unloading the plugin.
- */
-
 #include "internal.h"
 #include "debug.h"
 #include "gtkplugin.h"
@@ -385,6 +376,19 @@ plugin_load(PurplePlugin *plugin)
 static gboolean
 plugin_unload(PurplePlugin *plugin)
 {
+	GList *convs = purple_get_conversations();
+	while (convs) {
+		PurpleConversation *conv = (PurpleConversation *)convs->data;
+		
+		/* When a conversation is closed, pidgin finalizes its log via its set
+		   logger. If this is done on a conversation using colornicks_logger
+		   after the plugin is unloaded, and the logger no longer exists,
+		   pidgin crashes. Close the logs for all conversations so that they
+		   can start new logs on an existing logger. */
+		purple_conversation_close_logs(conv);
+		convs = convs->next;
+	}
+
 	if (g_strcmp0(purple_prefs_get_string("/purple/logging/format"), "colornicks") == 0) {
 		if (g_strcmp0(old_format, "colornicks") == 0)
 			purple_prefs_set_string("/purple/logging/format", "html");
