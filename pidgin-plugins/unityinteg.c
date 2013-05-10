@@ -432,11 +432,11 @@ get_config_frame(PurplePlugin *plugin)
 
 	/* Alerts */
 
-	frame = pidgin_make_frame(ret, _("Chat messages"));
+	frame = pidgin_make_frame(ret, _("Chatroom alerts"));
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 	gtk_container_add(GTK_CONTAINER(frame), vbox);
 
-	toggle = gtk_check_button_new_with_mnemonic(_("Chat message alerts _only where someone says your username"));
+	toggle = gtk_check_button_new_with_mnemonic(_("Chatroom message alerts _only where someone says your username"));
 	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
 	                             purple_prefs_get_bool("/plugins/gtk/unityinteg/alert_chat_nick"));
