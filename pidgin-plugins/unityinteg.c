@@ -41,6 +41,7 @@ static UnityLauncherEntry *launcher = NULL;
 static guint n_sources = 0;
 static gint launcher_count;
 static gint messaging_menu_text;
+static gboolean alert_chat_nick = TRUE;
 
 enum {
 	LAUNCHER_COUNT_DISABLE,
@@ -185,6 +186,10 @@ static gboolean
 message_displayed_cb(PurpleAccount *account, const char *who, char *message,
                      PurpleConversation *conv, PurpleMessageFlags flags)
 {
+	if ((purple_conversation_get_type(conv) == PURPLE_CONV_TYPE_CHAT &&
+	     alert_chat_nick && !(flags & PURPLE_MESSAGE_NICK)))
+		return FALSE;
+
 	if ((flags & PURPLE_MESSAGE_RECV) && !(flags & PURPLE_MESSAGE_DELAYED))
 		alert(conv);
 
@@ -344,6 +349,14 @@ messaging_menu_status_changed(MessagingMenuApp *mmapp,
 }
 
 static void
+alert_config_cb(GtkWidget *widget, gpointer data)
+{
+	gboolean on = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+	purple_prefs_set_bool("/plugins/gtk/unityinteg/alert_chat_nick", on);
+	alert_chat_nick = on;
+}
+
+static void
 launcher_config_cb(GtkWidget *widget, gpointer data)
 {
 	gint option = GPOINTER_TO_INT(data);
@@ -417,6 +430,19 @@ get_config_frame(PurplePlugin *plugin)
 	ret = gtk_box_new(GTK_ORIENTATION_VERTICAL, 18);
 	gtk_container_set_border_width(GTK_CONTAINER (ret), 12);
 
+	/* Alerts */
+
+	frame = pidgin_make_frame(ret, _("Chat messages"));
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+	gtk_container_add(GTK_CONTAINER(frame), vbox);
+
+	toggle = gtk_check_button_new_with_mnemonic(_("Chat message alerts _only where someone says your username"));
+	gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 0);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
+	                             purple_prefs_get_bool("/plugins/gtk/unityinteg/alert_chat_nick"));
+	g_signal_connect(G_OBJECT(toggle), "toggled",
+	                 G_CALLBACK(alert_config_cb), NULL);
+
 	/* Launcher integration */
 
 	frame = pidgin_make_frame(ret, _("Launcher Icon"));
@@ -480,6 +506,8 @@ plugin_load(PurplePlugin *plugin)
 	void *conv_handle = purple_conversations_get_handle();
 	void *gtk_conv_handle = pidgin_conversations_get_handle();
 	void *savedstat_handle = purple_savedstatuses_get_handle();
+
+	alert_chat_nick = purple_prefs_get_bool("/plugins/gtk/unityinteg/alert_chat_nick");
 
 	mmapp = messaging_menu_app_new("pidgin.desktop");
 	g_object_ref(mmapp);
@@ -600,6 +628,7 @@ init_plugin(PurplePlugin *plugin)
 	purple_prefs_add_none("/plugins/gtk/unityinteg");
 	purple_prefs_add_int("/plugins/gtk/unityinteg/launcher_count", LAUNCHER_COUNT_SOURCES);
 	purple_prefs_add_int("/plugins/gtk/unityinteg/messaging_menu_text", MESSAGING_MENU_COUNT);
+	purple_prefs_add_bool("/plugins/gtk/unityinteg/alert_chat_nick", TRUE);
 }
 
 PURPLE_INIT_PLUGIN(unityinteg, init_plugin, info)
