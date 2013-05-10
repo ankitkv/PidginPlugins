@@ -395,11 +395,11 @@ attach_signals(PurpleConversation *conv)
 
 	id = g_signal_connect(G_OBJECT(gtkconv->entry), "focus-in-event",
 	                      G_CALLBACK(unalert_cb), conv);
-	purple_conversation_set_data(conv, "unityinteg-webview-signal", GUINT_TO_POINTER(id));
+	purple_conversation_set_data(conv, "unityinteg-entry-signal", GUINT_TO_POINTER(id));
 
 	id = g_signal_connect(G_OBJECT(gtkconv->webview), "focus-in-event",
 	                      G_CALLBACK(unalert_cb), conv);
-	purple_conversation_set_data(conv, "unityinteg-entry-signal", GUINT_TO_POINTER(id));
+	purple_conversation_set_data(conv, "unityinteg-webview-signal", GUINT_TO_POINTER(id));
 
 	return 0;
 }
