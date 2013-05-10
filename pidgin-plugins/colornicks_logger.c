@@ -200,7 +200,7 @@ static gsize colornicks_logger_write(PurpleLog *log, PurpleMessageFlags type,
 	PurpleLogCommonLoggerData *data = log->logger_data;
 	gsize written = 0;
 
-	if(!data) {
+	if (!data) {
 		const char *prpl =
 			PURPLE_PLUGIN_PROTOCOL_INFO(plugin)->list_icon(log->account, NULL);
 		const char *date;
@@ -209,7 +209,7 @@ static gsize colornicks_logger_write(PurpleLog *log, PurpleMessageFlags type,
 		data = log->logger_data;
 
 		/* if we can't write to the file, give up before we hurt ourselves */
-		if(!data->file)
+		if (!data->file)
 			return 0;
 
 		date = purple_date_format_full(localtime(&log->time));
@@ -231,7 +231,7 @@ static gsize colornicks_logger_write(PurpleLog *log, PurpleMessageFlags type,
 	}
 
 	/* if we can't write to the file, give up before we hurt ourselves */
-	if(!data->file)
+	if (!data->file)
 		return 0;
 
 	escaped_from = g_markup_escape_text(from, -1);
@@ -247,7 +247,7 @@ static gsize colornicks_logger_write(PurpleLog *log, PurpleMessageFlags type,
 
 	date = log_get_timestamp(log, time);
 
-	if(log->type == PURPLE_LOG_SYSTEM){
+	if (log->type == PURPLE_LOG_SYSTEM){
 		written += fprintf(data->file, "---- %s @ %s ----<br/>\n", msg_fixed, date);
 	} else {
 		if (type & PURPLE_MESSAGE_SYSTEM)
@@ -271,14 +271,14 @@ static gsize colornicks_logger_write(PurpleLog *log, PurpleMessageFlags type,
 				written += fprintf(data->file, _("<font color=\"%s\"><font size=\"2\">(%s)</font> <b>%s &lt;AUTO-REPLY&gt;:</b></font> %s<br/>\n"),
 						(nick_color ? nick_color : "#A82F2F"), date, escaped_from, msg_fixed);
 		} else if (type & PURPLE_MESSAGE_RECV) {
-			if(purple_message_meify(msg_fixed, -1))
+			if (purple_message_meify(msg_fixed, -1))
 				written += fprintf(data->file, "<font color=\"%s\"><font size=\"2\">(%s)</font> <b>***%s</b></font> %s<br/>\n",
 						(nick_color ? nick_color : "#062585"), date, escaped_from, msg_fixed);
 			else
 				written += fprintf(data->file, "<font color=\"%s\"><font size=\"2\">(%s)</font> <b>%s:</b></font> %s<br/>\n",
 						(nick_color ? nick_color : "#A82F2F"), date, escaped_from, msg_fixed);
 		} else if (type & PURPLE_MESSAGE_SEND) {
-			if(purple_message_meify(msg_fixed, -1))
+			if (purple_message_meify(msg_fixed, -1))
 				written += fprintf(data->file, "<font color=\"#062585\"><font size=\"2\">(%s)</font> <b>***%s</b></font> %s<br/>\n",
 						date, escaped_from, msg_fixed);
 			else
@@ -303,7 +303,7 @@ static void colornicks_logger_finalize(PurpleLog *log)
 {
 	PurpleLogCommonLoggerData *data = log->logger_data;
 	if (data) {
-		if(data->file) {
+		if (data->file) {
 			fprintf(data->file, "</body></html>\n");
 			fclose(data->file);
 		}
