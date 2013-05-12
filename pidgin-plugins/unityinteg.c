@@ -249,7 +249,6 @@ message_source_activated(MessagingMenuApp *app, const gchar *id,
 	conv_type = type[0] - '0';
 	account = purple_accounts_find(aname, protocol);
 	conv = purple_find_conversation_with_account(conv_type, cname, account);
-	--n_sources;
 
 	if (conv) {
 		unalert(conv);
