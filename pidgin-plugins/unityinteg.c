@@ -56,7 +56,6 @@ enum {
 
 static int attach_signals(PurpleConversation *conv);
 static void detach_signals(PurpleConversation *conv);
-static void status_changed_cb(PurpleSavedStatus *saved_status);
 
 static void
 update_launcher()
@@ -136,13 +135,6 @@ static void
 refill_messaging_menu()
 {
 	GList *convs;
-	PurpleSavedStatus *saved_status;
-	messaging_menu_app_unregister(mmapp);
-	n_sources = 0;
-
-	messaging_menu_app_register(mmapp);
-	saved_status = purple_savedstatus_get_current();
-	status_changed_cb(saved_status);
 
 	for (convs = purple_get_conversations(); convs != NULL; convs = convs->next) {
 		PurpleConversation *conv = convs->data;
@@ -257,13 +249,12 @@ message_source_activated(MessagingMenuApp *app, const gchar *id,
 	account = purple_accounts_find(aname, protocol);
 	conv = purple_find_conversation_with_account(conv_type, cname, account);
 	--n_sources;
+	unalert(conv);
 
-	if (conv) {
-		unalert(conv);
-		purplewin = PIDGIN_CONVERSATION(conv)->win;
-		pidgin_conv_window_switch_gtkconv(purplewin, PIDGIN_CONVERSATION(conv));
-		gdk_window_focus(gtk_widget_get_window(purplewin->window), time(NULL));
-	}
+	purplewin = PIDGIN_CONVERSATION(conv)->win;
+	pidgin_conv_window_switch_gtkconv(purplewin, PIDGIN_CONVERSATION(conv));
+	gdk_window_focus(gtk_widget_get_window(purplewin->window), time(NULL));
+
 	g_strfreev (sections);
 }
 
@@ -390,7 +381,6 @@ messaging_menu_config_cb(GtkWidget *widget, gpointer data)
 	purple_prefs_set_int("/plugins/gtk/unityinteg/messaging_menu_text", option);
 	messaging_menu_text = option;
 	refill_messaging_menu();
-	update_launcher();
 }
 
 static int
