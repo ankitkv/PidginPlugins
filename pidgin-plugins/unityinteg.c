@@ -106,11 +106,10 @@ messaging_menu_add_conversation(PurpleConversation *conv, gint count)
 
 	/* GBytesIcon may be useful for messaging menu source icons using buddy
 	   icon data for IMs */
-	if (!messaging_menu_app_has_source(mmapp, id)) {
+	if (!messaging_menu_app_has_source(mmapp, id))
 		messaging_menu_app_append_source(mmapp, id, NULL,
 		                                 purple_conversation_get_title(conv));
-		++n_sources;
-	}
+
 	if (messaging_menu_text == MESSAGING_MENU_TIME)
 		messaging_menu_app_set_source_time(mmapp, id, g_get_real_time());
 	else if (messaging_menu_text == MESSAGING_MENU_COUNT)
@@ -124,10 +123,8 @@ static void
 messaging_menu_remove_conversation(PurpleConversation *conv)
 {
 	gchar *id = conversation_id(conv);
-	if (messaging_menu_app_has_source(mmapp, id)) {
+	if (messaging_menu_app_has_source(mmapp, id))
 		messaging_menu_app_remove_source(mmapp, id);
-		--n_sources;
-	}
 	g_free(id);
 }
 
@@ -158,7 +155,9 @@ alert(PurpleConversation *conv)
 	{
 		count = GPOINTER_TO_INT(purple_conversation_get_data(conv,
 		                        "unityinteg-message-count"));
-		count++;
+		if (!count++)
+			++n_sources;
+
 		purple_conversation_set_data(conv, "unityinteg-message-count",
 		                             GINT_TO_POINTER(count));
 		messaging_menu_add_conversation(conv, count);
@@ -171,6 +170,8 @@ alert(PurpleConversation *conv)
 static void
 unalert(PurpleConversation *conv)
 {
+	if (GPOINTER_TO_INT(purple_conversation_get_data(conv, "unityinteg-message-count")) > 0)
+		--n_sources;
 	purple_conversation_set_data(conv, "unityinteg-message-count",
 	                             GINT_TO_POINTER(0));
 	messaging_menu_remove_conversation(conv);
