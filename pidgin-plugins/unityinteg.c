@@ -249,12 +249,13 @@ message_source_activated(MessagingMenuApp *app, const gchar *id,
 	account = purple_accounts_find(aname, protocol);
 	conv = purple_find_conversation_with_account(conv_type, cname, account);
 	--n_sources;
-	unalert(conv);
 
-	purplewin = PIDGIN_CONVERSATION(conv)->win;
-	pidgin_conv_window_switch_gtkconv(purplewin, PIDGIN_CONVERSATION(conv));
-	gdk_window_focus(gtk_widget_get_window(purplewin->window), time(NULL));
-
+	if (conv) {
+		unalert(conv);
+		purplewin = PIDGIN_CONVERSATION(conv)->win;
+		pidgin_conv_window_switch_gtkconv(purplewin, PIDGIN_CONVERSATION(conv));
+		gdk_window_focus(gtk_widget_get_window(purplewin->window), time(NULL));
+	}
 	g_strfreev (sections);
 }
 
